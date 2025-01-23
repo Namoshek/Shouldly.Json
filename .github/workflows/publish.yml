@@ -1,0 +1,29 @@
+name: Publish NuGet package
+
+on:
+  push:
+    tags:
+      - v*
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Build packages
+        run: dotnet build --configuration 'Release'
+
+      - name: Pack NuGet packages
+        run: dotnet pack --configuration 'Release' --output 'out'
+
+      - name: Push NuGet packages to nuget.org
+        run: dotnet nuget push **/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate

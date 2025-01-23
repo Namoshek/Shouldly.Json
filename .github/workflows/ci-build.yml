@@ -1,0 +1,94 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  build:
+    name: Test dotnet ${{ matrix.dotnet-version }} on ${{ matrix.operating-system }}
+
+    runs-on: ${{ matrix.operating-system }}
+
+    strategy:
+      matrix:
+        operating-system: ['ubuntu-latest', 'windows-latest']
+        dotnet-version: ['9.0.x']
+        include:
+          - operating-system: 'windows-latest'
+            dotnet-version: '9.0.x'
+            run-sonarqube-analysis: true
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17 for SonarQube
+        if: matrix.run-sonarqube-analysis
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: 'zulu'
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ matrix.dotnet-version }}
+
+      - name: Install dotnet-coverage
+        if: matrix.run-sonarqube-analysis
+        shell: bash
+        run: dotnet tool install --global dotnet-coverage
+
+      - name: Cache SonarCloud packages
+        uses: actions/cache@v4
+        if: matrix.run-sonarqube-analysis
+        with:
+          path: ~\sonar\cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
+      - name: Cache SonarCloud scanner
+        id: cache-sonar-scanner
+        if: matrix.run-sonarqube-analysis
+        uses: actions/cache@v4
+        with:
+          path: .\.sonar\scanner
+          key: ${{ runner.os }}-sonar-scanner
+          restore-keys: ${{ runner.os }}-sonar-scanner
+
+      - name: Install SonarCloud scanner
+        if: matrix.run-sonarqube-analysis && steps.cache-sonar-scanner.outputs.cache-hit != 'true'
+        shell: powershell
+        run: |
+          New-Item -Path .\.sonar\scanner -ItemType Directory
+          dotnet tool update dotnet-sonarscanner --tool-path .\.sonar\scanner
+
+      - name: Build and analyze
+        if: matrix.run-sonarqube-analysis
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        shell: powershell
+        run: |
+          .\.sonar\scanner\dotnet-sonarscanner begin `
+              /k:"Namoshek_Shouldly.Json" `
+              /o:"namoshek" `
+              /d:sonar.host.url="https://sonarcloud.io" `
+              /d:sonar.login="${{ secrets.SONAR_TOKEN }}" `
+              /d:sonar.cs.vscoveragexml.reportsPaths=coverage.xml
+          dotnet build --configuration "Release" --no-incremental
+          dotnet-coverage collect 'dotnet test --no-restore --no-build --configuration Release' -f xml -o 'coverage.xml'
+          .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
+
+      - name: Build package
+        if: matrix.run-sonarqube-analysis != true
+        run: dotnet build --configuration 'Release'
+
+      - name: Run tests
+        if: matrix.run-sonarqube-analysis != true
+        run: dotnet test --configuration 'Debug'
