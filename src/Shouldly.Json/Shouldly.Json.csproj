@@ -1,7 +1,20 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>embedded</DebugType>
+    <Deterministic>true</Deterministic>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <EmbedAllSources>true</EmbedAllSources>
+    <Description>Shouldly.Json - Shouldly extension to work with JSON strings</Description>
+    <Authors>Marvin Mall</Authors>
+    <PackageTags>test;unit;testing;TDD;AAA;should;testunit;assert;assertion;json</PackageTags>
+    <PackageProjectUrl>https://github.com/Namoshek/Shouldly.Json</PackageProjectUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/Namoshek/Shouldly.Json.git</RepositoryUrl>
+    <PackageReleaseNotes>https://github.com/Namoshek/Shouldly.Json/releases/tag/v$(Version)</PackageReleaseNotes>
     <Nullable>enable</Nullable>
     <RootNamespace>Shouldly</RootNamespace>
   </PropertyGroup>
