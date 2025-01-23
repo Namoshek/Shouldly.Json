@@ -5,24 +5,52 @@ using System.Text.Json.Nodes;
 
 public static class ShouldlyJsonExtensions
 {
-    public static bool ShouldBeSemanticallySameJson(this string? actualJson, string? expectedJson)
+    public static void ShouldBeSemanticallySameJson(this string? actual, string? expected, string? customMessage = null)
     {
-        // If both are null, they are equal
-        if (actualJson == null && expectedJson == null)
+        var errorMessage = customMessage ?? "JSON strings should be semantically same";
+        
+        if (actual == null && expected == null)
+        {
+            return;
+        }
+
+        if (actual == null || expected == null)
+        {
+            throw new ShouldAssertException(errorMessage);
+        }
+
+        try
+        {
+            var actualNode = JsonNode.Parse(actual);
+            var expectedNode = JsonNode.Parse(expected);
+
+            if (!AreJsonNodesEqual(actualNode, expectedNode))
+            {
+                throw new ShouldAssertException(errorMessage);
+            }
+        }
+        catch (JsonException)
+        {
+            throw new ShouldAssertException($"{errorMessage} (invalid JSON provided)");
+        }
+    }
+
+    internal static bool IsSemanticallySameJson(this string? actual, string? expected)
+    {
+        if (actual == null && expected == null)
         {
             return true;
         }
 
-        // If only one is null, they are not equal
-        if (actualJson == null || expectedJson == null)
+        if (actual == null || expected == null)
         {
             return false;
         }
 
         try
         {
-            var actualNode = JsonNode.Parse(actualJson);
-            var expectedNode = JsonNode.Parse(expectedJson);
+            var actualNode = JsonNode.Parse(actual);
+            var expectedNode = JsonNode.Parse(expected);
             
             return AreJsonNodesEqual(actualNode, expectedNode);
         }
