@@ -14,6 +14,10 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Extract version tag
+        id: version_tag
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -23,7 +27,9 @@ jobs:
         run: dotnet build --configuration 'Release'
 
       - name: Pack NuGet packages
-        run: dotnet pack --configuration 'Release' --output 'out'
+        run: dotnet pack --configuration 'Release' --include-symbols --include-source --output 'out' /p:Version=$RELEASE_VERSION
+        env:
+          RELEASE_VERSION: ${{ steps.version_tag.outputs.version }}
 
       - name: Push NuGet packages to nuget.org
         run: dotnet nuget push **/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
