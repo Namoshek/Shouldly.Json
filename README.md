@@ -1,5 +1,12 @@
 # Shouldly.Json [![Nuget](https://img.shields.io/nuget/v/Shouldly.Json?style=flat-square)](https://nuget.org/packages/Shouldly.Json)
 
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=Namoshek_Shouldly.Json&metric=coverage)](https://sonarcloud.io/summary/new_code?id=Namoshek_Shouldly.Json)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Namoshek_Shouldly.Json&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=Namoshek_Shouldly.Json)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=Namoshek_Shouldly.Json&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=Namoshek_Shouldly.Json)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=Namoshek_Shouldly.Json&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=Namoshek_Shouldly.Json)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=Namoshek_Shouldly.Json&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=Namoshek_Shouldly.Json)
+[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=Namoshek_Shouldly.Json&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=Namoshek_Shouldly.Json)
+
 [`Shouldly.Json`](https://www.nuget.org/packages/Shouldly.Json/) was created by, and is maintained
 by [Marvin Mall](https://github.com/namoshek).
 It provides extension methods for the [Shouldly](https://github.com/shouldly/shouldly) library to compare JSON strings.
