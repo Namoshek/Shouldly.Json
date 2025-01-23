@@ -7,7 +7,7 @@ public static class ShouldlyJsonExtensions
 {
     public static void ShouldBeSemanticallySameJson(this string? actual, string? expected, string? customMessage = null)
     {
-        var errorMessage = customMessage ?? "JSON strings should be semantically same";
+        var errorMessage = customMessage ?? "JSON strings should be semantically the same";
         
         if (actual == null && expected == null)
         {
@@ -16,7 +16,12 @@ public static class ShouldlyJsonExtensions
 
         if (actual == null || expected == null)
         {
-            throw new ShouldAssertException(errorMessage);
+            throw new ShouldAssertException(new ExpectedActualShouldlyMessage(expected, null, errorMessage).ToString());
+        }
+
+        if (expected == null)
+        {
+            throw new ShouldAssertException(new ExpectedActualShouldlyMessage(null, actual, errorMessage).ToString());
         }
 
         try
@@ -26,12 +31,12 @@ public static class ShouldlyJsonExtensions
 
             if (!AreJsonNodesEqual(actualNode, expectedNode))
             {
-                throw new ShouldAssertException(errorMessage);
+                throw new ShouldAssertException(new ExpectedActualShouldlyMessage(expected, actual, errorMessage).ToString());
             }
         }
         catch (JsonException)
         {
-            throw new ShouldAssertException($"{errorMessage} (invalid JSON provided)");
+            throw new ShouldAssertException(new ExpectedActualShouldlyMessage(expected, actual, $"{errorMessage} (invalid JSON provided)").ToString());
         }
     }
 
@@ -120,7 +125,7 @@ public static class ShouldlyJsonExtensions
 
     private static bool AreJsonValuesEqual(JsonValue actual, JsonValue expected)
     {
-        // Handle null values
+        // Handle null values.
         if (actual.TryGetValue<JsonElement>(out var actualElement) &&
             expected.TryGetValue<JsonElement>(out var expectedElement))
         {
@@ -150,14 +155,104 @@ public static class ShouldlyJsonExtensions
 
     private static bool CompareNumbers(JsonElement actual, JsonElement expected)
     {
-        // Try parsing as decimal for most accurate number comparison
+        // Try parsing as decimal for most accurate number comparison.
         if (actual.TryGetDecimal(out decimal actualDecimal) && 
             expected.TryGetDecimal(out decimal expectedDecimal))
         {
             return actualDecimal == expectedDecimal;
         }
 
-        // Fallback to string comparison if decimal parsing fails
+        // Fallback to string comparison if decimal parsing fails.
         return actual.GetRawText() == expected.GetRawText();
+    }
+
+    public static void ShouldBeJsonSubtreeOf(this string? actual, string? expected, string? customMessage = null)
+    {
+        var errorMessage = customMessage ?? "JSON should be a subtree of expected JSON";
+        
+        if (actual == null && expected == null)
+        {
+            return;
+        }
+
+        if (actual == null || expected == null)
+        {
+            throw new ShouldAssertException(new ExpectedActualShouldlyMessage(expected, null, errorMessage).ToString());
+        }
+
+        if (expected == null)
+        {
+            throw new ShouldAssertException(new ExpectedActualShouldlyMessage(null, actual, errorMessage).ToString());
+        }
+
+        try
+        {
+            var actualNode = JsonNode.Parse(actual);
+            var expectedNode = JsonNode.Parse(expected);
+
+            if (!IsJsonSubtree(actualNode, expectedNode))
+            {
+                throw new ShouldAssertException(new ExpectedActualShouldlyMessage(expected, actual, errorMessage).ToString());
+            }
+        }
+        catch (JsonException)
+        {
+            throw new ShouldAssertException(new ExpectedActualShouldlyMessage(expected, actual, $"{errorMessage} (invalid JSON provided)").ToString());
+        }
+    }
+
+    private static bool IsJsonSubtree(JsonNode? actual, JsonNode? expected)
+    {
+        if (actual == null || expected == null)
+        {
+            return actual == expected;
+        }
+
+        return (actual, expected) switch
+        {
+            (JsonObject actualObj, JsonObject expectedObj) => IsJsonObjectSubtree(actualObj, expectedObj),
+            (JsonArray actualArr, JsonArray expectedArr) => IsJsonArraySubtree(actualArr, expectedArr),
+            (JsonValue actualVal, JsonValue expectedVal) => AreJsonValuesEqual(actualVal, expectedVal),
+
+            _ => false,
+        };
+    }
+
+    private static bool IsJsonObjectSubtree(JsonObject actual, JsonObject expected)
+    {
+        // For each property in actual, it must exist in expected and match.
+        foreach (var (key, actualValue) in actual)
+        {
+            if (!expected.TryGetPropertyValue(key, out JsonNode? expectedValue))
+            {
+                return false;
+            }
+
+            if (!IsJsonSubtree(actualValue, expectedValue))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool IsJsonArraySubtree(JsonArray actual, JsonArray expected)
+    {
+        // Arrays must match exactly in length and content.
+        if (actual.Count != expected.Count)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < actual.Count; i++)
+        {
+            if (!IsJsonSubtree(actual[i], expected[i]))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
