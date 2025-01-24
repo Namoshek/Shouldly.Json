@@ -18,7 +18,7 @@ jobs:
         operating-system: ['ubuntu-latest', 'windows-latest']
         dotnet-version: ['9.0.x']
         include:
-          - operating-system: 'ubuntu-latest'
+          - operating-system: 'windows-latest'
             dotnet-version: '9.0.x'
             run-sonarqube-analysis: true
 
