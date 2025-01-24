@@ -74,4 +74,23 @@ public static class ShouldlyJsonExtensions
             throw new ShouldAssertException(new ExpectedActualShouldlyMessage(expected, actual, $"{errorMessage} (invalid JSON provided)").ToString());
         }
     }
+
+    public static void ShouldBeValidJson(this string? actual, string? customMessage = null)
+    {
+        var errorMessage = customMessage ?? "String should be valid JSON";
+        
+        if (actual == null)
+        {
+            throw new ShouldAssertException(new ActualShouldlyMessage(actual, errorMessage).ToString());
+        }
+
+        try
+        {
+            _ = JsonDocument.Parse(actual);
+        }
+        catch (JsonException ex)
+        {
+            throw new ShouldAssertException(new ActualShouldlyMessage(actual, $"{errorMessage}: {ex.Message}").ToString());
+        }
+    }
 }

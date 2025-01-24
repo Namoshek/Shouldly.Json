@@ -216,4 +216,4 @@ public class ShouldBeJsonSubtreeOfTest
 
         Should.Throw<ShouldAssertException>(() => subset.ShouldBeJsonSubtreeOf(fullSet));
     }
-} 
+}
