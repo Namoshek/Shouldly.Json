@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using Json.Pointer;
 using Json.More;
+using Humanizer;
 
 public static class ShouldlyJsonExtensions
 {
@@ -178,6 +179,255 @@ public static class ShouldlyJsonExtensions
         catch (Exception ex) when (ex is JsonException or PointerParseException)
         {
             throw new ShouldAssertException(new ActualShouldlyMessage(actual, $"{errorMessage}: {ex.Message}").ToString());
+        }
+    }
+
+    /// <summary>
+    /// Asserts that the numeric value at the specified JSON Pointer path is less than the given value.
+    /// </summary>
+    /// <typeparam name="T">The numeric type to compare (must implement IComparable{T}).</typeparam>
+    /// <param name="actual">The JSON string to search.</param>
+    /// <param name="jsonPointer">The JSON Pointer path to the value.</param>
+    /// <param name="value">The value to compare against.</param>
+    /// <param name="customMessage">An optional custom message to include in the exception if the assertion fails.</param>
+    /// <exception cref="ShouldAssertException">Thrown if the value at the JSON Pointer path is not less than the given value.</exception>
+    public static void ShouldHaveJsonValueLessThan<T>(this string? actual, string jsonPointer, T value, string? customMessage = null) 
+        where T : struct, IComparable<T>
+    {
+        var actualValue = GetAndValidateJsonValue<T>(actual, jsonPointer, customMessage);
+        var errorMessage = customMessage ?? $"JSON value at pointer '{jsonPointer}' should be less than {value}";
+        
+        if (actualValue.CompareTo(value) >= 0)
+        {
+            throw new ShouldAssertException(new ExpectedActualShouldlyMessage($"less than {value}", actualValue, errorMessage).ToString());
+        }
+    }
+
+    /// <summary>
+    /// Asserts that the numeric value at the specified JSON Pointer path is less than or equal to the given value.
+    /// </summary>
+    /// <typeparam name="T">The numeric type to compare (must implement IComparable{T}).</typeparam>
+    /// <param name="actual">The JSON string to search.</param>
+    /// <param name="jsonPointer">The JSON Pointer path to the value.</param>
+    /// <param name="value">The value to compare against.</param>
+    /// <param name="customMessage">An optional custom message to include in the exception if the assertion fails.</param>
+    /// <exception cref="ShouldAssertException">Thrown if the value at the JSON Pointer path is not less than or equal to the given value.</exception>
+    public static void ShouldHaveJsonValueLessThanOrEqualTo<T>(this string? actual, string jsonPointer, T value, string? customMessage = null) 
+        where T : struct, IComparable<T>
+    {
+        var actualValue = GetAndValidateJsonValue<T>(actual, jsonPointer, customMessage);
+        var errorMessage = customMessage ?? $"JSON value at pointer '{jsonPointer}' should be less than or equal to {value}";
+        
+        if (actualValue.CompareTo(value) > 0)
+        {
+            throw new ShouldAssertException(new ExpectedActualShouldlyMessage($"less than or equal to {value}", actualValue, errorMessage).ToString());
+        }
+    }
+
+    /// <summary>
+    /// Asserts that the numeric value at the specified JSON Pointer path is greater than the given value.
+    /// </summary>
+    /// <typeparam name="T">The numeric type to compare (must implement IComparable{T}).</typeparam>
+    /// <param name="actual">The JSON string to search.</param>
+    /// <param name="jsonPointer">The JSON Pointer path to the value.</param>
+    /// <param name="value">The value to compare against.</param>
+    /// <param name="customMessage">An optional custom message to include in the exception if the assertion fails.</param>
+    /// <exception cref="ShouldAssertException">Thrown if the value at the JSON Pointer path is not greater than the given value.</exception>
+    public static void ShouldHaveJsonValueGreaterThan<T>(this string? actual, string jsonPointer, T value, string? customMessage = null) 
+        where T : struct, IComparable<T>
+    {
+        var actualValue = GetAndValidateJsonValue<T>(actual, jsonPointer, customMessage);
+        var errorMessage = customMessage ?? $"JSON value at pointer '{jsonPointer}' should be greater than {value}";
+        
+        if (actualValue.CompareTo(value) <= 0)
+        {
+            throw new ShouldAssertException(new ExpectedActualShouldlyMessage($"greater than {value}", actualValue, errorMessage).ToString());
+        }
+    }
+
+    /// <summary>
+    /// Asserts that the numeric value at the specified JSON Pointer path is greater than or equal to the given value.
+    /// </summary>
+    /// <typeparam name="T">The numeric type to compare (must implement IComparable{T}).</typeparam>
+    /// <param name="actual">The JSON string to search.</param>
+    /// <param name="jsonPointer">The JSON Pointer path to the value.</param>
+    /// <param name="value">The value to compare against.</param>
+    /// <param name="customMessage">An optional custom message to include in the exception if the assertion fails.</param>
+    /// <exception cref="ShouldAssertException">Thrown if the value at the JSON Pointer path is not greater than or equal to the given value.</exception>
+    public static void ShouldHaveJsonValueGreaterThanOrEqualTo<T>(this string? actual, string jsonPointer, T value, string? customMessage = null) 
+        where T : struct, IComparable<T>
+    {
+        var actualValue = GetAndValidateJsonValue<T>(actual, jsonPointer, customMessage);
+        var errorMessage = customMessage ?? $"JSON value at pointer '{jsonPointer}' should be greater than or equal to {value}";
+        
+        if (actualValue.CompareTo(value) < 0)
+        {
+            throw new ShouldAssertException(new ExpectedActualShouldlyMessage($"greater than or equal to {value}", actualValue, errorMessage).ToString());
+        }
+    }
+
+    /// <summary>
+    /// Asserts that the numeric value at the specified JSON Pointer path is between the given minimum and maximum values (inclusive).
+    /// </summary>
+    /// <typeparam name="T">The numeric type to compare (must implement IComparable{T}).</typeparam>
+    /// <param name="actual">The JSON string to search.</param>
+    /// <param name="jsonPointer">The JSON Pointer path to the value.</param>
+    /// <param name="min">The minimum value to compare against.</param>
+    /// <param name="max">The maximum value to compare against.</param>
+    /// <param name="customMessage">An optional custom message to include in the exception if the assertion fails.</param>
+    /// <exception cref="ShouldAssertException">Thrown if the value at the JSON Pointer path is not between the given minimum and maximum values.</exception>
+    public static void ShouldHaveJsonValueBetween<T>(this string? actual, string jsonPointer, T min, T max, string? customMessage = null) 
+        where T : struct, IComparable<T>
+    {
+        var actualValue = GetAndValidateJsonValue<T>(actual, jsonPointer, customMessage);
+        var errorMessage = customMessage ?? $"JSON value at pointer '{jsonPointer}' should be between {min} and {max}";
+        
+        if (actualValue.CompareTo(min) < 0 || actualValue.CompareTo(max) > 0)
+        {
+            throw new ShouldAssertException(new ExpectedActualShouldlyMessage($"between {min} and {max}", actualValue, errorMessage).ToString());
+        }
+    }
+
+    /// <summary>
+    /// Asserts that the date/time value at the specified JSON Pointer path is before the given value.
+    /// </summary>
+    /// <remarks>
+    /// This method is very similar to <see cref="ShouldHaveJsonValueLessThan{T}(string?, string, T, string?)"/>
+    /// but gives better semantics for date/times.
+    /// </remarks>
+    /// <typeparam name="T">The date/time type to compare (must implement IComparable{T}).</typeparam>
+    /// <param name="actual">The JSON string to search.</param>
+    /// <param name="jsonPointer">The JSON Pointer path to the value.</param>
+    /// <param name="value">The value to compare against.</param>
+    /// <param name="customMessage">An optional custom message to include in the exception if the assertion fails.</param>
+    /// <exception cref="ShouldAssertException">Thrown if the value at the JSON Pointer path is not before the given value.</exception>
+    public static void ShouldHaveJsonDateBefore<T>(this string? actual, string jsonPointer, T value, string? customMessage = null)
+        where T : struct, IComparable<T>
+    {
+        var actualValue = GetAndValidateJsonValue<T>(actual, jsonPointer, customMessage);
+        var errorMessage = customMessage ?? $"JSON date/time at pointer '{jsonPointer}' should be before {value}";
+
+        if (actualValue.CompareTo(value) >= 0)
+        {
+            throw new ShouldAssertException(new ExpectedActualShouldlyMessage($"before {value}", actualValue, errorMessage).ToString());
+        }
+    }
+
+    /// <summary>
+    /// Asserts that the date/time value at the specified JSON Pointer path is before or equal to the given value.
+    /// </summary>
+    /// <remarks>
+    /// This method is very similar to <see cref="ShouldHaveJsonValueLessThanOrEqualTo{T}(string?, string, T, string?)"/>
+    /// but gives better semantics for date/times.
+    /// </remarks>
+    /// <typeparam name="T">The date/time type to compare (must implement IComparable{T}).</typeparam>
+    /// <param name="actual">The JSON string to search.</param>
+    /// <param name="jsonPointer">The JSON Pointer path to the value.</param>
+    /// <param name="value">The value to compare against.</param>
+    /// <param name="customMessage">An optional custom message to include in the exception if the assertion fails.</param>
+    /// <exception cref="ShouldAssertException">Thrown if the value at the JSON Pointer path is not before or equal to the given value.</exception>
+    public static void ShouldHaveJsonDateBeforeOrEqualTo<T>(this string? actual, string jsonPointer, T value, string? customMessage = null)
+        where T : struct, IComparable<T>
+    {
+        var actualValue = GetAndValidateJsonValue<T>(actual, jsonPointer, customMessage);
+        var errorMessage = customMessage ?? $"JSON date/time at pointer '{jsonPointer}' should be before or equal to {value}";
+
+        if (actualValue.CompareTo(value) > 0)
+        {
+            throw new ShouldAssertException(new ExpectedActualShouldlyMessage($"before or equal to {value}", actualValue, errorMessage).ToString());
+        }
+    }
+
+    /// <summary>
+    /// Asserts that the date/time value at the specified JSON Pointer path is after the given value.
+    /// </summary>
+    /// <remarks>
+    /// This method is very similar to <see cref="ShouldHaveJsonValueGreaterThan{T}(string?, string, T, string?)"/>
+    /// but gives better semantics for date/times.
+    /// </remarks>
+    /// <typeparam name="T">The date/time type to compare (must implement IComparable{T}).</typeparam>
+    /// <param name="actual">The JSON string to search.</param>
+    /// <param name="jsonPointer">The JSON Pointer path to the value.</param>
+    /// <param name="value">The value to compare against.</param>
+    /// <param name="customMessage">An optional custom message to include in the exception if the assertion fails.</param>
+    /// <exception cref="ShouldAssertException">Thrown if the value at the JSON Pointer path is not after the given value.</exception>
+    public static void ShouldHaveJsonDateAfter<T>(this string? actual, string jsonPointer, T value, string? customMessage = null)
+        where T : struct, IComparable<T>
+    {
+        var actualValue = GetAndValidateJsonValue<T>(actual, jsonPointer, customMessage);
+        var errorMessage = customMessage ?? $"JSON date/time at pointer '{jsonPointer}' should be after {value}";
+
+        if (actualValue.CompareTo(value) <= 0)
+        {
+            throw new ShouldAssertException(new ExpectedActualShouldlyMessage($"after {value}", actualValue, errorMessage).ToString());
+        }
+    }
+
+    /// <summary>
+    /// Asserts that the date/time value at the specified JSON Pointer path is after or equal to the given value.
+    /// </summary>
+    /// <remarks>
+    /// This method is very similar to <see cref="ShouldHaveJsonValueGreaterThanOrEqualTo{T}(string?, string, T, string?)"/>
+    /// but gives better semantics for date/times.
+    /// </remarks>
+    /// <typeparam name="T">The date/time type to compare (must implement IComparable{T}).</typeparam>
+    /// <param name="actual">The JSON string to search.</param>
+    /// <param name="jsonPointer">The JSON Pointer path to the value.</param>
+    /// <param name="value">The value to compare against.</param>
+    /// <param name="customMessage">An optional custom message to include in the exception if the assertion fails.</param>
+    /// <exception cref="ShouldAssertException">Thrown if the value at the JSON Pointer path is not after or equal to the given value.</exception>
+    public static void ShouldHaveJsonDateAfterOrEqualTo<T>(this string? actual, string jsonPointer, T value, string? customMessage = null)
+        where T : struct, IComparable<T>
+    {
+        var actualValue = GetAndValidateJsonValue<T>(actual, jsonPointer, customMessage);
+        var errorMessage = customMessage ?? $"JSON date/time at pointer '{jsonPointer}' should be after or equal to {value}";
+        
+        if (actualValue.CompareTo(value) < 0)
+        {
+            throw new ShouldAssertException(new ExpectedActualShouldlyMessage($"after or equal to {value}", actualValue, errorMessage).ToString());
+        }
+    }
+
+    /// <summary>
+    /// Asserts that the date/time value at the specified JSON Pointer path is between the given start (inclusive) and end (exclusive) values.
+    /// </summary>
+    /// <remarks>
+    /// This method is very similar to <see cref="ShouldHaveJsonValueBetween{T}(string?, string, T, T, string?)"/>
+    /// but uses an exclusive upper bound since time is continuous. It also gives better semantics for date/times.
+    /// </remarks>
+    /// <typeparam name="T">The date/time type to compare (must implement IComparable{T}).</typeparam>
+    /// <param name="actual">The JSON string to search.</param>
+    /// <param name="jsonPointer">The JSON Pointer path to the value.</param>
+    /// <param name="start">The inclusive start value of the range.</param>
+    /// <param name="end">The exclusive end value of the range.</param>
+    /// <param name="customMessage">An optional custom message to include in the exception if the assertion fails.</param>
+    /// <exception cref="ShouldAssertException">Thrown if the value at the JSON Pointer path is not within the specified range.</exception>
+    public static void ShouldHaveJsonDateBetween<T>(this string? actual, string jsonPointer, T start, T end, string? customMessage = null)
+        where T : struct, IComparable<T>
+    {
+        var actualValue = GetAndValidateJsonValue<T>(actual, jsonPointer, customMessage);
+        var errorMessage = customMessage ?? $"JSON date at pointer '{jsonPointer}' should be between {start} (inclusive) and {end} (exclusive)";
+
+        if (actualValue.CompareTo(start) < 0 || actualValue.CompareTo(end) >= 0)
+        {
+            throw new ShouldAssertException(new ExpectedActualShouldlyMessage($"between {start} (inclusive) and {end} (exclusive)", actualValue, errorMessage).ToString());
+        }
+    }
+
+    private static T GetAndValidateJsonValue<T>(string? json, string jsonPointer, string? customMessage) where T : struct
+    {
+        if (json == null)
+        {
+            throw new ShouldAssertException(new ActualShouldlyMessage(null, customMessage ?? "JSON string is null").ToString());
+        }
+
+        try
+        {
+            return JsonHelper.GetValueAtPointer<T>(json, jsonPointer);
+        }
+        catch (Exception ex) when (ex is JsonException or PointerParseException)
+        {
+            throw new ShouldAssertException(new ActualShouldlyMessage(json, $"{customMessage ?? "Invalid JSON or pointer"}: {ex.Message}").ToString());
         }
     }
 }

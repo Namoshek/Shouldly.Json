@@ -67,7 +67,7 @@ internal static class JsonHelper
         var jsonNode = JsonNode.Parse(json);
         if (jsonNode == null)
         {
-            return default;
+            throw new ShouldAssertException("String is not valid JSON.");
         }
 
         var jsonPointer = JsonPointer.Parse(pointer);
