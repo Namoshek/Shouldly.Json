@@ -411,4 +411,25 @@ public class ShouldHaveJsonValueComparisonTest
             ex.Message.ShouldContain(expectedError);
         }
     }
+
+    [Fact]
+    public void NumericComparisons_WithCustomMessage_ShouldWork()
+    {
+        var json = @"{""value"": 42}";
+        const string customMessage = "Custom error message";
+
+        var ex = Should.Throw<ShouldAssertException>(() => json.ShouldHaveJsonValueLessThan("/value", 40, customMessage));
+
+        ex.Message.ShouldContain(customMessage);
+    }
+
+    [Theory]
+    [InlineData("/path/to/value")]
+    [InlineData("#/path/to/value")]
+    public void DifferentPointerFormats_ShouldWork(string pointer)
+    {
+        var json = @"{""path"": {""to"": {""value"": 42}}}";
+        
+        json.ShouldHaveJsonValueLessThan(pointer, 43);
+    }
 }
