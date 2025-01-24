@@ -2,6 +2,7 @@ namespace Shouldly;
 
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Json.Pointer;
 
 internal static class JsonHelper
 {
@@ -159,5 +160,22 @@ internal static class JsonHelper
         }
 
         return true;
+    }
+
+    internal static T? GetValueAtPointer<T>(string json, string pointer)
+    {
+        var jsonNode = JsonNode.Parse(json);
+        if (jsonNode == null)
+        {
+            return default;
+        }
+
+        var jsonPointer = JsonPointer.Parse(pointer);
+        if (!jsonPointer.TryEvaluate(jsonNode, out var result))
+        {
+            throw new ShouldAssertException("Pointer does not evaluate to a JSON node.");
+        }
+        
+        return result.Deserialize<T>();
     }
 }

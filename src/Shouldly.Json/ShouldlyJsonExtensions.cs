@@ -1,7 +1,10 @@
 ﻿namespace Shouldly;
 
+using System;
+using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Json.Pointer;
 
 public static class ShouldlyJsonExtensions
 {
@@ -89,6 +92,44 @@ public static class ShouldlyJsonExtensions
             _ = JsonDocument.Parse(actual);
         }
         catch (JsonException ex)
+        {
+            throw new ShouldAssertException(new ActualShouldlyMessage(actual, $"{errorMessage}: {ex.Message}").ToString());
+        }
+    }
+
+    public static void ShouldHaveJsonValueAt<T>(this string? actual, string jsonPointer, T expectedValue, IEqualityComparer<T>? comparer = null, string? customMessage = null)
+    {
+        var errorMessage = customMessage ?? $"JSON should have value '{expectedValue}' at pointer '{jsonPointer}'";
+        
+        if (actual == null)
+        {
+            throw new ShouldAssertException(new ActualShouldlyMessage(actual, errorMessage).ToString());
+        }
+
+        try
+        {
+            var actualValue = JsonHelper.GetValueAtPointer<T>(actual, jsonPointer);
+            
+            if (actualValue == null && expectedValue == null)
+            {
+                return;
+            }
+
+            if (actualValue == null || expectedValue == null)
+            {
+                throw new ShouldAssertException(new ExpectedActualShouldlyMessage(expectedValue, actualValue, errorMessage).ToString());
+            }
+
+            var areEqual = comparer != null 
+                ? comparer.Equals(actualValue, expectedValue)
+                : EqualityComparer<T>.Default.Equals(actualValue, expectedValue);
+
+            if (!areEqual)
+            {
+                throw new ShouldAssertException(new ExpectedActualShouldlyMessage(expectedValue, actualValue, errorMessage).ToString());
+            }
+        }
+        catch (Exception ex) when (ex is JsonException or PointerParseException)
         {
             throw new ShouldAssertException(new ActualShouldlyMessage(actual, $"{errorMessage}: {ex.Message}").ToString());
         }
