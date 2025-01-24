@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Json.Pointer;
+using Json.More;
 
 public static class ShouldlyJsonExtensions
 {
@@ -19,7 +20,7 @@ public static class ShouldlyJsonExtensions
 
         if (actual == null || expected == null)
         {
-            throw new ShouldAssertException(new ExpectedActualShouldlyMessage(expected, null, errorMessage).ToString());
+            throw new ShouldAssertException(new ExpectedActualShouldlyMessage(expected, actual, errorMessage).ToString());
         }
 
         if (expected == null)
@@ -32,7 +33,7 @@ public static class ShouldlyJsonExtensions
             var actualNode = JsonNode.Parse(actual);
             var expectedNode = JsonNode.Parse(expected);
 
-            if (!JsonHelper.AreJsonNodesEqual(actualNode, expectedNode))
+            if (!actualNode.IsEquivalentTo(expectedNode))
             {
                 throw new ShouldAssertException(new ExpectedActualShouldlyMessage(expected, actual, errorMessage).ToString());
             }
