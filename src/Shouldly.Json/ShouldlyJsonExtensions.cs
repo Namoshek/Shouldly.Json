@@ -33,11 +33,6 @@ public static class ShouldlyJsonExtensions
             throw new ShouldAssertException(new ExpectedActualShouldlyMessage(expected, actual, errorMessage).ToString());
         }
 
-        if (expected == null)
-        {
-            throw new ShouldAssertException(new ExpectedActualShouldlyMessage(null, actual, errorMessage).ToString());
-        }
-
         try
         {
             var actualNode = JsonNode.Parse(actual);
@@ -74,12 +69,7 @@ public static class ShouldlyJsonExtensions
 
         if (actual == null || expected == null)
         {
-            throw new ShouldAssertException(new ExpectedActualShouldlyMessage(expected, null, errorMessage).ToString());
-        }
-
-        if (expected == null)
-        {
-            throw new ShouldAssertException(new ExpectedActualShouldlyMessage(null, actual, errorMessage).ToString());
+            throw new ShouldAssertException(new ExpectedActualShouldlyMessage(expected, actual, errorMessage).ToString());
         }
 
         try
@@ -155,14 +145,14 @@ public static class ShouldlyJsonExtensions
 
         try
         {
-            var actualValue = JsonHelper.GetValueAtPointer<T>(actual, jsonPointer);
+            var actualValue = JsonHelper.GetValueAtPointer<T>(actual, jsonPointer, allowNull: true);
             
             if (actualValue == null && expectedValue == null)
             {
                 return;
             }
 
-            if (actualValue == null || expectedValue == null)
+            if (actualValue == null)
             {
                 throw new ShouldAssertException(new ExpectedActualShouldlyMessage(expectedValue, actualValue, errorMessage).ToString());
             }
@@ -414,20 +404,31 @@ public static class ShouldlyJsonExtensions
         }
     }
 
+    /// <summary>
+    /// Gets and validates a JSON value at the specified pointer path.
+    /// </summary>
+    /// <typeparam name="T">The type to deserialize the value to.</typeparam>
+    /// <param name="json">The JSON string to search.</param>
+    /// <param name="jsonPointer">The JSON Pointer path to the value.</param>
+    /// <param name="customMessage">An optional custom message to include in the exception.</param>
+    /// <returns>The value at the specified pointer path.</returns>
+    /// <exception cref="ShouldAssertException">
+    /// Thrown when:
+    /// - The input JSON is null
+    /// - The JSON is invalid
+    /// - The pointer is invalid
+    /// - The value cannot be found at the specified pointer
+    /// - The value cannot be converted to the specified type
+    /// </exception>
     private static T GetAndValidateJsonValue<T>(string? json, string jsonPointer, string? customMessage) where T : struct
     {
-        if (json == null)
-        {
-            throw new ShouldAssertException(new ActualShouldlyMessage(null, customMessage ?? "JSON string is null").ToString());
-        }
-
         try
         {
             return JsonHelper.GetValueAtPointer<T>(json, jsonPointer);
         }
-        catch (Exception ex) when (ex is JsonException or PointerParseException)
+        catch (ShouldAssertException ex)
         {
-            throw new ShouldAssertException(new ActualShouldlyMessage(json, $"{customMessage ?? "Invalid JSON or pointer"}: {ex.Message}").ToString());
+            throw new ShouldAssertException(new ActualShouldlyMessage(json, customMessage ?? ex.Message).ToString());
         }
     }
 }
