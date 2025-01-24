@@ -18,7 +18,7 @@ jobs:
         operating-system: ['ubuntu-latest', 'windows-latest']
         dotnet-version: ['9.0.x']
         include:
-          - operating-system: 'windows-latest'
+          - operating-system: 'ubuntu-latest'
             dotnet-version: '9.0.x'
             run-sonarqube-analysis: true
 
@@ -79,11 +79,11 @@ jobs:
               /k:"Namoshek_Shouldly.Json" `
               /o:"namoshek" `
               /d:sonar.host.url="https://sonarcloud.io" `
-              /d:sonar.login="${{ secrets.SONAR_TOKEN }}" `
-              /d:sonar.cs.vscoveragexml.reportsPaths=**/coverage.xml
+              /d:sonar.token="${{ secrets.SONAR_TOKEN }}" `
+              /d:sonar.cs.vscoveragexml.reportsPaths=coverage.xml
           dotnet build --configuration "Release" --no-incremental
-          dotnet-coverage collect 'dotnet test --no-restore --no-build --configuration Release' -f xml -o 'coverage.xml'
-          .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
+          dotnet-coverage collect 'dotnet test' -f xml -o 'coverage.xml'
+          .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
       - name: Build package
         if: matrix.run-sonarqube-analysis != true
