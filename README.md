@@ -24,6 +24,26 @@ Install-Package Shouldly.Json
 
 The library provides multiple methods for comparing JSON strings.
 
+### Basic JSON Validation
+
+Use `ShouldBeValidJson()` to validate if the given string is valid JSON syntax. Be aware that besides arrays and objects, JSON also supports other types like strings, numbers, booleans, and null in the root of a string.
+
+```csharp
+var json = @"{""name"": ""John"", ""age"": 30}";
+
+json.ShouldBeValidJson();
+```
+
+Use `ShouldBeJsonObject()` and `ShouldBeJsonArray()` to check if the given string is a valid JSON object or array.
+
+```csharp
+var json1 = @"{""name"": ""John"", ""age"": 30}";
+var json2 = @"[1, 2, 3]";
+
+json1.ShouldBeJsonObject();
+json2.ShouldBeJsonArray();
+```
+
 ### Semantic JSON Equality
 
 Use `ShouldBeSemanticallySameJson()` to compare two JSON strings for semantic equality. This means:
@@ -57,6 +77,83 @@ var json4 = @"{""firstName"": ""John""}";
 json1.ShouldBeJsonSubtreeOf(json2); // Succeeds
 json1.ShouldBeJsonSubtreeOf(json3); // Fails
 json1.ShouldBeJsonSubtreeOf(json4); // Fails
+```
+
+### JSON Schema Validation
+
+Use `ShouldMatchJsonSchema()` to validate a JSON string against a JSON Schema. This allows you to verify that JSON data conforms to an expected structure and format.
+
+```csharp
+var json = @"{""name"": ""John"", ""age"": 30}";
+var schema = @"{
+    ""type"": ""object"",
+    ""properties"": {
+        ""name"": { ""type"": ""string"" },
+        ""age"": { ""type"": ""integer"", ""minimum"": 0 }
+    },
+    ""required"": [""name"", ""age""]
+}";
+
+json.ShouldMatchJsonSchema(schema);
+```
+
+### Property Existence Validation
+
+Use `ShouldHaveJsonProperty()` to check if a JSON string has a specific property. You can also provide a JSON pointer to check the existence of a property at a specific path.
+
+```csharp
+var json = @"{""user"": {""name"": ""John""}}";
+
+json.ShouldHaveJsonProperty("/user/name");
+```
+
+### Property Value Validation
+
+Use `ShouldHaveJsonValue()` to check if a JSON string has a specific property with a specific value. You can also provide a JSON pointer to check the value of a property at a specific path.
+
+```csharp
+var json1 = @"{""user"": {""name"": ""John""}}";
+var json2 = @"{""users"": [{""name"": ""John""}, {""name"": ""Jane""}]}";
+
+json1.ShouldHaveJsonValue("/user/name", "John");
+json2.ShouldHaveJsonValue("/users/2/name", "Jane");
+```
+
+Use any of the other `ShouldHaveJsonValue` methods to check the value of a property at a specific path with different comparators.
+
+```csharp
+var json = @"{""user"": {""name"": ""John"", ""age"": 30}}";
+
+json.ShouldHaveJsonValueLessThan("/user/age", 31);
+json.ShouldHaveJsonValueLessThanOrEqualTo("/user/age", 30);
+json.ShouldHaveJsonValueGreaterThan("/user/age", 29);
+json.ShouldHaveJsonValueGreaterThanOrEqualTo("/user/age", 30);
+json.ShouldHaveJsonValueBetween("/user/age", 29, 31);
+```
+
+Special methods for date/time values are also available. They work very similar but provide better semantics for date/time values.
+Also be aware that those methods use the upper bound exclusively while the other methods inclusively.
+
+```csharp
+var json = @"{""user"": {""name"": ""John"", ""birthDate"": ""1990-01-01""}}";
+
+json.ShouldHaveJsonDateBefore("/user/birthDate", new DateTime(1990, 1, 2));
+json.ShouldHaveJsonDateBeforeOrEqualTo("/user/birthDate", new DateTime(1990, 1, 2));
+json.ShouldHaveJsonDateAfter("/user/birthDate", new DateTime(1990, 1, 1));
+json.ShouldHaveJsonDateAfterOrEqualTo("/user/birthDate", new DateTime(1990, 1, 1));
+json.ShouldHaveJsonDateBetween("/user/birthDate", new DateTime(1989, 1, 1), new DateTime(1991, 1, 1));
+```
+
+### Array Length Validation
+
+Use `ShouldHaveJsonArrayCount()` to check the length of an array. You can also provide a JSON pointer to check the length of an array at a specific path.
+
+```csharp
+var json1 = @"[1, 2, 3]";
+var json2 = @"{""users"": [""John"", ""Jane""]}";
+
+json1.ShouldHaveJsonArrayCount(3); // root array
+json2.ShouldHaveJsonArrayCount(2, "/users"); // nested array
 ```
 
 ## License
