@@ -130,7 +130,7 @@ public static class ShouldlyJsonExtensions
     /// <exception cref="ShouldAssertException">
     /// Thrown if the value at the JSON Pointer path does not exist or does not match the expected value.
     /// </exception>
-    public static void ShouldHaveJsonValueAt<T>(
+    public static void ShouldHaveJsonValue<T>(
         this string? actual,
         string jsonPointer,
         T expectedValue,

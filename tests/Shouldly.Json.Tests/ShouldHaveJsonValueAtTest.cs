@@ -10,8 +10,8 @@ public class ShouldHaveJsonValueAtTest
     {
         var json = @"{""name"": ""John"", ""age"": 30}";
 
-        json.ShouldHaveJsonValueAt("/name", "John");
-        json.ShouldHaveJsonValueAt("/age", 30);
+        json.ShouldHaveJsonValue("/name", "John");
+        json.ShouldHaveJsonValue("/age", 30);
     }
 
     [Fact]
@@ -26,8 +26,8 @@ public class ShouldHaveJsonValueAtTest
             }
         }";
 
-        json.ShouldHaveJsonValueAt("/person/name", "John");
-        json.ShouldHaveJsonValueAt("/person/address/city", "New York");
+        json.ShouldHaveJsonValue("/person/name", "John");
+        json.ShouldHaveJsonValue("/person/address/city", "New York");
     }
 
     [Fact]
@@ -35,8 +35,8 @@ public class ShouldHaveJsonValueAtTest
     {
         var json = @"{""numbers"": [1, 2, 3], ""names"": [""John"", ""Jane""]}";
 
-        json.ShouldHaveJsonValueAt("/numbers/0", 1);
-        json.ShouldHaveJsonValueAt("/names/1", "Jane");
+        json.ShouldHaveJsonValue("/numbers/0", 1);
+        json.ShouldHaveJsonValue("/names/1", "Jane");
     }
 
     [Fact]
@@ -54,8 +54,8 @@ public class ShouldHaveJsonValueAtTest
             ]
         }";
 
-        json.ShouldHaveJsonValueAt("/users/0/name", "John");
-        json.ShouldHaveJsonValueAt("/users/0/addresses/1/city", "Boston");
+        json.ShouldHaveJsonValue("/users/0/name", "John");
+        json.ShouldHaveJsonValue("/users/0/addresses/1/city", "Boston");
     }
 
     [Fact]
@@ -63,7 +63,7 @@ public class ShouldHaveJsonValueAtTest
     {
         var json = @"{""value"": ""TEST""}";
 
-        json.ShouldHaveJsonValueAt("/value", "test", StringComparer.OrdinalIgnoreCase);
+        json.ShouldHaveJsonValue("/value", "test", StringComparer.OrdinalIgnoreCase);
     }
 
     [Theory]
@@ -74,7 +74,7 @@ public class ShouldHaveJsonValueAtTest
     {
         var json = @"{""name"": ""John""}";
 
-        Should.Throw<ShouldAssertException>(() => json.ShouldHaveJsonValueAt(pointer, "value"));
+        Should.Throw<ShouldAssertException>(() => json.ShouldHaveJsonValue(pointer, "value"));
     }
 
     [Fact]
@@ -82,7 +82,7 @@ public class ShouldHaveJsonValueAtTest
     {
         var json = @"{""array"": [1, 2, 3]}";
 
-        Should.Throw<ShouldAssertException>(() => json.ShouldHaveJsonValueAt("/array/5", 0));
+        Should.Throw<ShouldAssertException>(() => json.ShouldHaveJsonValue("/array/5", 0));
     }
 
     [Fact]
@@ -90,7 +90,7 @@ public class ShouldHaveJsonValueAtTest
     {
         var json = @"{""value"": ""string""}";
 
-        Should.Throw<ShouldAssertException>(() => json.ShouldHaveJsonValueAt<int>("/value", 42));
+        Should.Throw<ShouldAssertException>(() => json.ShouldHaveJsonValue<int>("/value", 42));
     }
 
     [Fact]
@@ -98,7 +98,7 @@ public class ShouldHaveJsonValueAtTest
     {
         var json = @"{""value"": null}";
 
-        json.ShouldHaveJsonValueAt<string?>("/value", null);
+        json.ShouldHaveJsonValue<string?>("/value", null);
     }
 
     [Theory]
@@ -107,7 +107,7 @@ public class ShouldHaveJsonValueAtTest
     [InlineData("{invalid json}")]
     public void InvalidJson_ShouldThrow(string? invalidJson)
     {
-        Should.Throw<ShouldAssertException>(() => invalidJson.ShouldHaveJsonValueAt("/path", "value"));
+        Should.Throw<ShouldAssertException>(() => invalidJson.ShouldHaveJsonValue("/path", "value"));
     }
 
     [Fact]
@@ -117,7 +117,7 @@ public class ShouldHaveJsonValueAtTest
         var customMessage = "Custom error message";
 
         var ex = Should.Throw<ShouldAssertException>(() =>
-            json.ShouldHaveJsonValueAt("/value", "expected", customMessage: customMessage));
+            json.ShouldHaveJsonValue("/value", "expected", customMessage: customMessage));
 
         ex.Message.ShouldContain(customMessage);
     }
@@ -127,8 +127,8 @@ public class ShouldHaveJsonValueAtTest
     {
         var json = @"{""~tilde"": 1, ""slash/prop"": 2}";
 
-        json.ShouldHaveJsonValueAt("/~0tilde", 1);
-        json.ShouldHaveJsonValueAt("/slash~1prop", 2);
+        json.ShouldHaveJsonValue("/~0tilde", 1);
+        json.ShouldHaveJsonValue("/slash~1prop", 2);
     }
 
     [Fact]
@@ -137,7 +137,7 @@ public class ShouldHaveJsonValueAtTest
         var json = @"{""value"": {""name"": ""test""}}";
         var expected = "TeSt";
 
-        json.ShouldHaveJsonValueAt("/value/name", expected, new CustomValueComparer());
+        json.ShouldHaveJsonValue("/value/name", expected, new CustomValueComparer());
     }
 }
 
