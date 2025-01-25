@@ -405,6 +405,64 @@ public static class ShouldlyJsonExtensions
     }
 
     /// <summary>
+    /// Asserts that the JSON string has an object as its root element.
+    /// </summary>
+    /// <param name="actual">The JSON string to check.</param>
+    /// <param name="customMessage">An optional custom message to include in the exception if the assertion fails.</param>
+    /// <exception cref="ShouldAssertException">Thrown if the JSON string does not have an object as its root element.</exception>
+    public static void ShouldBeJsonObject(this string? actual, string? customMessage = null)
+    {
+        var errorMessage = customMessage ?? "JSON string should have an object as root element";
+        
+        if (actual == null)
+        {
+            throw new ShouldAssertException(new ActualShouldlyMessage(actual, errorMessage).ToString());
+        }
+
+        try
+        {
+            var jsonNode = JsonNode.Parse(actual);
+            if (jsonNode?.GetValueKind() != JsonValueKind.Object)
+            {
+                throw new ShouldAssertException(new ActualShouldlyMessage(actual, errorMessage).ToString());
+            }
+        }
+        catch (JsonException ex)
+        {
+            throw new ShouldAssertException(new ActualShouldlyMessage(actual, $"{errorMessage}: {ex.Message}").ToString());
+        }
+    }
+
+    /// <summary>
+    /// Asserts that the JSON string has an array as its root element.
+    /// </summary>
+    /// <param name="actual">The JSON string to check.</param>
+    /// <param name="customMessage">An optional custom message to include in the exception if the assertion fails.</param>
+    /// <exception cref="ShouldAssertException">Thrown if the JSON string does not have an array as its root element.</exception>
+    public static void ShouldBeJsonArray(this string? actual, string? customMessage = null)
+    {
+        var errorMessage = customMessage ?? "JSON string should have an array as root element";
+        
+        if (actual == null)
+        {
+            throw new ShouldAssertException(new ActualShouldlyMessage(actual, errorMessage).ToString());
+        }
+
+        try
+        {
+            var jsonNode = JsonNode.Parse(actual);
+            if (jsonNode?.GetValueKind() != JsonValueKind.Array)
+            {
+                throw new ShouldAssertException(new ActualShouldlyMessage(actual, errorMessage).ToString());
+            }
+        }
+        catch (JsonException ex)
+        {
+            throw new ShouldAssertException(new ActualShouldlyMessage(actual, $"{errorMessage}: {ex.Message}").ToString());
+        }
+    }
+
+    /// <summary>
     /// Gets and validates a JSON value at the specified pointer path.
     /// </summary>
     /// <typeparam name="T">The type to deserialize the value to.</typeparam>
