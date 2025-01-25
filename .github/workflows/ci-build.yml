@@ -75,7 +75,7 @@ jobs:
               /o:"namoshek" `
               /d:sonar.host.url="https://sonarcloud.io" `
               /d:sonar.token="${{ secrets.SONAR_TOKEN }}" `
-              /d:sonar.cs.opencover.reportsPaths=coverage.opencover.xml
+              /d:sonar.cs.opencover.reportsPaths=**/coverage.opencover.xml
           dotnet build --configuration "Release" --no-incremental
           dotnet test --collect:"XPlat Code Coverage;Format=opencover"
           .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
