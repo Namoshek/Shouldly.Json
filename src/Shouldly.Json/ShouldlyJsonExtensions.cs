@@ -2,11 +2,12 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using Json.Pointer;
 using Json.More;
-using Humanizer;
+using Json.Pointer;
+using Json.Schema;
 
 public static class ShouldlyJsonExtensions
 {
@@ -23,12 +24,12 @@ public static class ShouldlyJsonExtensions
     {
         var errorMessage = customMessage ?? "JSON strings should be semantically the same";
         
-        if (actual == null && expected == null)
+        if (actual is null && expected is null)
         {
             return;
         }
 
-        if (actual == null || expected == null)
+        if (actual is null || expected is null)
         {
             throw new ShouldAssertException(new ExpectedActualShouldlyMessage(expected, actual, errorMessage).ToString());
         }
@@ -62,12 +63,12 @@ public static class ShouldlyJsonExtensions
     {
         var errorMessage = customMessage ?? "JSON should be a subtree of expected JSON";
         
-        if (actual == null && expected == null)
+        if (actual is null && expected is null)
         {
             return;
         }
 
-        if (actual == null || expected == null)
+        if (actual is null || expected is null)
         {
             throw new ShouldAssertException(new ExpectedActualShouldlyMessage(expected, actual, errorMessage).ToString());
         }
@@ -102,7 +103,7 @@ public static class ShouldlyJsonExtensions
     {
         var errorMessage = customMessage ?? "String should be valid JSON";
         
-        if (actual == null)
+        if (actual is null)
         {
             throw new ShouldAssertException(new ActualShouldlyMessage(actual, errorMessage).ToString());
         }
@@ -138,7 +139,7 @@ public static class ShouldlyJsonExtensions
     {
         var errorMessage = customMessage ?? $"JSON should have value '{expectedValue}' at pointer '{jsonPointer}'";
         
-        if (actual == null)
+        if (actual is null)
         {
             throw new ShouldAssertException(new ActualShouldlyMessage(actual, errorMessage).ToString());
         }
@@ -147,12 +148,12 @@ public static class ShouldlyJsonExtensions
         {
             var actualValue = JsonHelper.GetValueAtPointer<T>(actual, jsonPointer, allowNull: true);
             
-            if (actualValue == null && expectedValue == null)
+            if (actualValue is null && expectedValue is null)
             {
                 return;
             }
 
-            if (actualValue == null)
+            if (actualValue is null)
             {
                 throw new ShouldAssertException(new ExpectedActualShouldlyMessage(expectedValue, actualValue, errorMessage).ToString());
             }
@@ -416,7 +417,7 @@ public static class ShouldlyJsonExtensions
     {
         var errorMessage = customMessage ?? $"JSON should have a property at pointer '{jsonPointer}'";
 
-        if (actual == null)
+        if (actual is null)
         {
             throw new ShouldAssertException(new ActualShouldlyMessage(actual, "JSON string is null").ToString());
         }
@@ -424,7 +425,7 @@ public static class ShouldlyJsonExtensions
         try
         {
             var jsonNode = JsonNode.Parse(actual);
-            if (jsonNode == null)
+            if (jsonNode is null)
             {
                 throw new ShouldAssertException(new ActualShouldlyMessage(actual, "JSON string parsed to null").ToString());
             }
@@ -455,7 +456,7 @@ public static class ShouldlyJsonExtensions
     {
         var errorMessage = customMessage ?? "JSON string should have an object as root element";
         
-        if (actual == null)
+        if (actual is null)
         {
             throw new ShouldAssertException(new ActualShouldlyMessage(actual, "JSON string is null").ToString());
         }
@@ -484,7 +485,7 @@ public static class ShouldlyJsonExtensions
     {
         var errorMessage = customMessage ?? "JSON string should have an array as root element";
         
-        if (actual == null)
+        if (actual is null)
         {
             throw new ShouldAssertException(new ActualShouldlyMessage(actual, "JSON string is null").ToString());
         }
@@ -515,7 +516,7 @@ public static class ShouldlyJsonExtensions
     {
         var errorMessage = customMessage ?? $"JSON array at pointer '{jsonPointer}' should have {expectedCount} elements";
 
-        if (actual == null)
+        if (actual is null)
         {
             throw new ShouldAssertException(new ActualShouldlyMessage(actual, "JSON string is null").ToString());
         }
@@ -523,7 +524,7 @@ public static class ShouldlyJsonExtensions
         try
         {
             var jsonNode = JsonNode.Parse(actual);
-            if (jsonNode == null)
+            if (jsonNode is null)
             {
                 throw new ShouldAssertException(new ActualShouldlyMessage(actual, "JSON string parsed to null").ToString());
             }
@@ -554,6 +555,73 @@ public static class ShouldlyJsonExtensions
         catch (PointerParseException ex)
         {
             throw new ShouldAssertException(new ActualShouldlyMessage(actual, $"Invalid JSON pointer '{jsonPointer}': {ex.Message}").ToString());
+        }
+    }
+
+    /// <summary>
+    /// Asserts that the JSON string is valid according to the provided JSON schema.
+    /// </summary>
+    /// <param name="actual">The JSON string to validate.</param>
+    /// <param name="schema">The JSON schema to validate against.</param>
+    /// <param name="customMessage">An optional custom message to include in the exception if the assertion fails.</param>
+    /// <exception cref="ShouldAssertException">Thrown if the JSON is invalid or does not conform to the schema.</exception>
+    public static void ShouldMatchJsonSchema(this string? actual, string schema, string? customMessage = null)
+    {
+        var errorMessage = customMessage ?? "JSON should match the provided schema";
+
+        if (actual is null)
+        {
+            throw new ShouldAssertException(new ActualShouldlyMessage(actual, "JSON string is null").ToString());
+        }
+
+        JsonSchema? jsonSchema = null;
+        try
+        {
+            jsonSchema = JsonSchema.FromText(schema);
+            if (jsonSchema is null)
+            {
+                throw new ShouldAssertException(new ActualShouldlyMessage(actual, "Invalid JSON Schema").ToString());
+            }
+        }
+        catch (JsonException ex)
+        {
+            throw new ShouldAssertException(new ActualShouldlyMessage(actual, $"Invalid JSON Schema: {ex.Message}").ToString());
+        }
+
+        try
+        {
+            var jsonNode = JsonNode.Parse(actual);
+
+            if (jsonNode is null)
+            {
+                throw new ShouldAssertException(new ActualShouldlyMessage(actual, "JSON string parsed to null").ToString());
+            }
+
+            var evaluationResults = jsonSchema.Evaluate(jsonNode, new EvaluationOptions
+            {
+                OutputFormat = OutputFormat.List,
+                RequireFormatValidation = true,
+            });
+
+            if (evaluationResults is null)
+            {
+                throw new ShouldAssertException(new ActualShouldlyMessage(actual, "JSON Schema evaluation failed").ToString());
+            }
+
+            if (!evaluationResults.IsValid)
+            {
+                var errors = evaluationResults.Details.SelectMany(d => d.Errors?.Select(kvp => $"{kvp.Key}: {kvp.Value}") ?? []);
+
+                throw new ShouldAssertException(new ActualShouldlyMessage(actual, $"{errorMessage}:\n{string.Join("\n", errors)}").ToString());
+            }
+        }
+        catch (JsonException ex)
+        {
+            throw new ShouldAssertException(new ActualShouldlyMessage(actual, $"Invalid JSON: {ex.Message}").ToString());
+        }
+        catch (JsonSchemaException ex)
+        {
+            throw new ShouldAssertException(new ActualShouldlyMessage(schema, $"Invalid JSON Schema: {ex.Message}").ToString());
         }
     }
 
