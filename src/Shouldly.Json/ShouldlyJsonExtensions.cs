@@ -173,7 +173,7 @@ public static class ShouldlyJsonExtensions
     }
 
     /// <summary>
-    /// Asserts that the numeric value at the specified JSON Pointer path is less than the given value.
+    /// Asserts that the numeric value at the specified JSON Pointer (RFC 6901) path is less than the given value.
     /// </summary>
     /// <typeparam name="T">The numeric type to compare (must implement IComparable{T}).</typeparam>
     /// <param name="actual">The JSON string to search.</param>
@@ -194,7 +194,7 @@ public static class ShouldlyJsonExtensions
     }
 
     /// <summary>
-    /// Asserts that the numeric value at the specified JSON Pointer path is less than or equal to the given value.
+    /// Asserts that the numeric value at the specified JSON Pointer (RFC 6901) path is less than or equal to the given value.
     /// </summary>
     /// <typeparam name="T">The numeric type to compare (must implement IComparable{T}).</typeparam>
     /// <param name="actual">The JSON string to search.</param>
@@ -215,7 +215,7 @@ public static class ShouldlyJsonExtensions
     }
 
     /// <summary>
-    /// Asserts that the numeric value at the specified JSON Pointer path is greater than the given value.
+    /// Asserts that the numeric value at the specified JSON Pointer (RFC 6901) path is greater than the given value.
     /// </summary>
     /// <typeparam name="T">The numeric type to compare (must implement IComparable{T}).</typeparam>
     /// <param name="actual">The JSON string to search.</param>
@@ -236,7 +236,7 @@ public static class ShouldlyJsonExtensions
     }
 
     /// <summary>
-    /// Asserts that the numeric value at the specified JSON Pointer path is greater than or equal to the given value.
+    /// Asserts that the numeric value at the specified JSON Pointer (RFC 6901) path is greater than or equal to the given value.
     /// </summary>
     /// <typeparam name="T">The numeric type to compare (must implement IComparable{T}).</typeparam>
     /// <param name="actual">The JSON string to search.</param>
@@ -257,7 +257,7 @@ public static class ShouldlyJsonExtensions
     }
 
     /// <summary>
-    /// Asserts that the numeric value at the specified JSON Pointer path is between the given minimum and maximum values (inclusive).
+    /// Asserts that the numeric value at the specified JSON Pointer (RFC 6901) path is between the given minimum and maximum values (inclusive).
     /// </summary>
     /// <typeparam name="T">The numeric type to compare (must implement IComparable{T}).</typeparam>
     /// <param name="actual">The JSON string to search.</param>
@@ -279,7 +279,7 @@ public static class ShouldlyJsonExtensions
     }
 
     /// <summary>
-    /// Asserts that the date/time value at the specified JSON Pointer path is before the given value.
+    /// Asserts that the date/time value at the specified JSON Pointer (RFC 6901) path is before the given value.
     /// </summary>
     /// <remarks>
     /// This method is very similar to <see cref="ShouldHaveJsonValueLessThan{T}(string?, string, T, string?)"/>
@@ -304,7 +304,7 @@ public static class ShouldlyJsonExtensions
     }
 
     /// <summary>
-    /// Asserts that the date/time value at the specified JSON Pointer path is before or equal to the given value.
+    /// Asserts that the date/time value at the specified JSON Pointer (RFC 6901) path is before or equal to the given value.
     /// </summary>
     /// <remarks>
     /// This method is very similar to <see cref="ShouldHaveJsonValueLessThanOrEqualTo{T}(string?, string, T, string?)"/>
@@ -329,7 +329,7 @@ public static class ShouldlyJsonExtensions
     }
 
     /// <summary>
-    /// Asserts that the date/time value at the specified JSON Pointer path is after the given value.
+    /// Asserts that the date/time value at the specified JSON Pointer (RFC 6901) path is after the given value.
     /// </summary>
     /// <remarks>
     /// This method is very similar to <see cref="ShouldHaveJsonValueGreaterThan{T}(string?, string, T, string?)"/>
@@ -354,7 +354,7 @@ public static class ShouldlyJsonExtensions
     }
 
     /// <summary>
-    /// Asserts that the date/time value at the specified JSON Pointer path is after or equal to the given value.
+    /// Asserts that the date/time value at the specified JSON Pointer (RFC 6901) path is after or equal to the given value.
     /// </summary>
     /// <remarks>
     /// This method is very similar to <see cref="ShouldHaveJsonValueGreaterThanOrEqualTo{T}(string?, string, T, string?)"/>
@@ -379,7 +379,7 @@ public static class ShouldlyJsonExtensions
     }
 
     /// <summary>
-    /// Asserts that the date/time value at the specified JSON Pointer path is between the given start (inclusive) and end (exclusive) values.
+    /// Asserts that the date/time value at the specified JSON Pointer (RFC 6901) path is between the given start (inclusive) and end (exclusive) values.
     /// </summary>
     /// <remarks>
     /// This method is very similar to <see cref="ShouldHaveJsonValueBetween{T}(string?, string, T, T, string?)"/>
@@ -405,7 +405,7 @@ public static class ShouldlyJsonExtensions
     }
 
     /// <summary>
-    /// Asserts that the JSON string has a property at the specified JSON Pointer path.
+    /// Asserts that the JSON string has a property at the specified JSON Pointer (RFC 6901) path.
     /// The property can have any value, including null.
     /// </summary>
     /// <param name="actual">The JSON string to check.</param>
@@ -500,6 +500,60 @@ public static class ShouldlyJsonExtensions
         catch (JsonException ex)
         {
             throw new ShouldAssertException(new ActualShouldlyMessage(actual, $"{errorMessage}: {ex.Message}").ToString());
+        }
+    }
+
+    /// <summary>
+    /// Asserts that the JSON array at the specified JSON Pointer (RFC 6901) path has the expected number of elements.
+    /// </summary>
+    /// <param name="actual">The JSON string to check.</param>
+    /// <param name="expectedCount">The expected number of elements in the array.</param>
+    /// <param name="jsonPointer">The JSON Pointer path to the array. Can be in standard notation (/path/to/array) or URI Fragment Identifier notation (#/path/to/array). Defaults to root pointer "/".</param>
+    /// <param name="customMessage">An optional custom message to include in the exception if the assertion fails.</param>
+    /// <exception cref="ShouldAssertException">Thrown if the array does not exist or has a different number of elements.</exception>
+    public static void ShouldHaveJsonArrayCount(this string? actual, int expectedCount, string jsonPointer = "", string? customMessage = null)
+    {
+        var errorMessage = customMessage ?? $"JSON array at pointer '{jsonPointer}' should have {expectedCount} elements";
+
+        if (actual == null)
+        {
+            throw new ShouldAssertException(new ActualShouldlyMessage(actual, "JSON string is null").ToString());
+        }
+
+        try
+        {
+            var jsonNode = JsonNode.Parse(actual);
+            if (jsonNode == null)
+            {
+                throw new ShouldAssertException(new ActualShouldlyMessage(actual, "JSON string parsed to null").ToString());
+            }
+
+            var pointer = JsonPointer.Parse(jsonPointer);
+            if (!pointer.TryEvaluate(jsonNode, out var result))
+            {
+                throw new ShouldAssertException(new ActualShouldlyMessage(actual, $"No value found at JSON pointer '{jsonPointer}'").ToString());
+            }
+
+            if (result?.GetValueKind() != JsonValueKind.Array)
+            {
+                throw new ShouldAssertException(new ActualShouldlyMessage(actual, $"Value at JSON pointer '{jsonPointer}' is not an array").ToString());
+            }
+
+            var arrayNode = result.AsArray();
+            var actualCount = arrayNode.Count;
+
+            if (actualCount != expectedCount)
+            {
+                throw new ShouldAssertException(new ExpectedActualShouldlyMessage(expectedCount, actualCount, errorMessage).ToString());
+            }
+        }
+        catch (JsonException ex)
+        {
+            throw new ShouldAssertException(new ActualShouldlyMessage(actual, $"Invalid JSON: {ex.Message}").ToString());
+        }
+        catch (PointerParseException ex)
+        {
+            throw new ShouldAssertException(new ActualShouldlyMessage(actual, $"Invalid JSON pointer '{jsonPointer}': {ex.Message}").ToString());
         }
     }
 
