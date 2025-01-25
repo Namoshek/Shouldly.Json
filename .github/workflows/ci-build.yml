@@ -39,11 +39,6 @@ jobs:
         with:
           dotnet-version: ${{ matrix.dotnet-version }}
 
-      - name: Install dotnet-coverage
-        if: matrix.run-sonarqube-analysis
-        shell: bash
-        run: dotnet tool install --global dotnet-coverage
-
       - name: Cache SonarCloud packages
         uses: actions/cache@v4
         if: matrix.run-sonarqube-analysis
@@ -80,9 +75,9 @@ jobs:
               /o:"namoshek" `
               /d:sonar.host.url="https://sonarcloud.io" `
               /d:sonar.token="${{ secrets.SONAR_TOKEN }}" `
-              /d:sonar.cs.vscoveragexml.reportsPaths=coverage.xml
+              /d:sonar.cs.opencover.reportsPaths=coverage.opencover.xml
           dotnet build --configuration "Release" --no-incremental
-          dotnet-coverage collect 'dotnet test' -f xml -o 'coverage.xml'
+          dotnet test --collect:"XPlat Code Coverage;Format=opencover"
           .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
       - name: Build package
