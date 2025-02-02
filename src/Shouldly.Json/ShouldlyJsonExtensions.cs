@@ -764,6 +764,45 @@ public static class ShouldlyJsonExtensions
     }
 
     /// <summary>
+    /// Asserts that the JSON string is not a subtree of the expected JSON.
+    /// A subtree means that all properties in the actual JSON must exist in the expected JSON with the same values,
+    /// but the expected JSON can have additional properties.
+    /// </summary>
+    /// <param name="actual">The actual JSON string to check as a subtree.</param>
+    /// <param name="expected">The expected JSON string to compare against.</param>
+    /// <param name="customMessage">An optional custom message to include in the exception if the assertion fails.</param>
+    /// <exception cref="ShouldAssertException">Thrown if the actual JSON is a subtree of the expected JSON or if either JSON is invalid.</exception>
+    public static void ShouldNotBeJsonSubtreeOf(this string? actual, string? expected, string? customMessage = null)
+    {
+        var errorMessage = customMessage ?? "JSON should not be a subtree of expected JSON";
+        
+        if (actual is null && expected is null)
+        {
+            throw new ShouldAssertException(new ExpectedActualShouldlyMessage(expected, actual, errorMessage).ToString());
+        }
+
+        if (actual is null || expected is null)
+        {
+            return;
+        }
+
+        try
+        {
+            var actualNode = JsonNode.Parse(actual);
+            var expectedNode = JsonNode.Parse(expected);
+
+            if (JsonHelper.IsJsonSubtree(actualNode, expectedNode))
+            {
+                throw new ShouldAssertException(new ExpectedActualShouldlyMessage(expected, actual, errorMessage).ToString());
+            }
+        }
+        catch (JsonException)
+        {
+            throw new ShouldAssertException(new ExpectedActualShouldlyMessage(expected, actual, $"{errorMessage} (invalid JSON provided)").ToString());
+        }
+    }
+
+    /// <summary>
     /// Gets and validates a JSON value at the specified pointer path.
     /// </summary>
     /// <typeparam name="T">The type to deserialize the value to.</typeparam>
