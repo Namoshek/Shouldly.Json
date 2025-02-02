@@ -675,7 +675,7 @@ public static class ShouldlyJsonExtensions
     }
 
     /// <summary>
-    /// Asserts that the JSON string does not have a property at the specified JSON Pointer path.
+    /// Asserts that the JSON string does not have a property at the specified JSON Pointer (RFC 6901) path.
     /// </summary>
     /// <param name="actual">The JSON string to check.</param>
     /// <param name="jsonPointer">The JSON Pointer path to the property. Can be in standard notation (/path/to/property) or URI Fragment Identifier notation (#/path/to/property).</param>
@@ -799,6 +799,60 @@ public static class ShouldlyJsonExtensions
         catch (JsonException)
         {
             throw new ShouldAssertException(new ExpectedActualShouldlyMessage(expected, actual, $"{errorMessage} (invalid JSON provided)").ToString());
+        }
+    }
+
+    /// <summary>
+    /// Asserts that the JSON array at the specified JSON Pointer (RFC 6901) path does not have the specified number of elements.
+    /// </summary>
+    /// <param name="actual">The JSON string to check.</param>
+    /// <param name="unexpectedCount">The number of elements that the array should not have.</param>
+    /// <param name="jsonPointer">The JSON Pointer path to the array. Can be in standard notation (/path/to/array) or URI Fragment Identifier notation (#/path/to/array). Defaults to root pointer "/".</param>
+    /// <param name="customMessage">An optional custom message to include in the exception if the assertion fails.</param>
+    /// <exception cref="ShouldAssertException">Thrown if the array has exactly the unexpected number of elements, or if the JSON is invalid.</exception>
+    public static void ShouldNotHaveJsonArrayCount(this string? actual, int unexpectedCount, string jsonPointer = "/", string? customMessage = null)
+    {
+        var errorMessage = customMessage ?? $"JSON array at pointer '{jsonPointer}' should not have {unexpectedCount} elements";
+
+        if (actual is null)
+        {
+            throw new ShouldAssertException(new ActualShouldlyMessage(actual, "JSON string is null").ToString());
+        }
+
+        try
+        {
+            var jsonNode = JsonNode.Parse(actual);
+            if (jsonNode is null)
+            {
+                throw new ShouldAssertException(new ActualShouldlyMessage(actual, "JSON string parsed to null").ToString());
+            }
+
+            var pointer = JsonPointer.Parse(jsonPointer);
+            if (!pointer.TryEvaluate(jsonNode, out var result))
+            {
+                throw new ShouldAssertException(new ActualShouldlyMessage(actual, $"No value found at JSON pointer '{jsonPointer}'").ToString());
+            }
+
+            if (result?.GetValueKind() != JsonValueKind.Array)
+            {
+                throw new ShouldAssertException(new ActualShouldlyMessage(actual, $"Value at JSON pointer '{jsonPointer}' is not an array").ToString());
+            }
+
+            var arrayNode = result.AsArray();
+            var actualCount = arrayNode.Count;
+
+            if (actualCount == unexpectedCount)
+            {
+                throw new ShouldAssertException(new ExpectedActualShouldlyMessage($"not {unexpectedCount}", actualCount, errorMessage).ToString());
+            }
+        }
+        catch (JsonException ex)
+        {
+            throw new ShouldAssertException(new ActualShouldlyMessage(actual, $"Invalid JSON: {ex.Message}").ToString());
+        }
+        catch (PointerParseException ex)
+        {
+            throw new ShouldAssertException(new ActualShouldlyMessage(actual, $"Invalid JSON pointer '{jsonPointer}': {ex.Message}").ToString());
         }
     }
 
