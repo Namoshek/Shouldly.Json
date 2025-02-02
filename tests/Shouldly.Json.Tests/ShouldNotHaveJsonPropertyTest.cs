@@ -1,4 +1,4 @@
-namespace Shouldly.Json.Tests;
+namespace Shouldly;
 
 public class ShouldNotHaveJsonPropertyTest
 {

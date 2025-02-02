@@ -39,6 +39,16 @@ public static class ShouldlyJsonExtensions
             var actualNode = JsonNode.Parse(actual);
             var expectedNode = JsonNode.Parse(expected);
 
+            if (actualNode == null && expectedNode == null)
+            {
+                return;
+            }
+
+            if (actualNode == null || expectedNode == null)
+            {
+                throw new ShouldAssertException(new ActualShouldlyMessage(actual, "Both JSON strings parsed to null").ToString());
+            }
+
             if (!actualNode.IsEquivalentTo(expectedNode))
             {
                 throw new ShouldAssertException(new ExpectedActualShouldlyMessage(expected, actual, errorMessage).ToString());
@@ -701,6 +711,55 @@ public static class ShouldlyJsonExtensions
         catch (PointerParseException ex)
         {
             throw new ShouldAssertException(new ActualShouldlyMessage(actual, $"Invalid JSON pointer '{jsonPointer}': {ex.Message}").ToString());
+        }
+    }
+
+    /// <summary>
+    /// Asserts that the JSON string is not semantically equal to the expected JSON.
+    /// This means that property order in objects and whitespace differences are ignored in the comparison,
+    /// but array order is considered.
+    /// </summary>
+    /// <param name="actual">The actual JSON string to compare.</param>
+    /// <param name="expected">The expected JSON string to compare against.</param>
+    /// <param name="customMessage">An optional custom message to include in the exception if the assertion fails.</param>
+    /// <exception cref="ShouldAssertException">Thrown if the JSON strings are semantically equal or if either JSON is invalid.</exception>
+    public static void ShouldNotBeSemanticallySameJson(this string? actual, string? expected, string? customMessage = null)
+    {
+        var errorMessage = customMessage ?? "JSON strings should not be semantically the same";
+
+        if (actual is null && expected is null)
+        {
+            throw new ShouldAssertException(new ExpectedActualShouldlyMessage(expected, actual, errorMessage).ToString());
+        }
+
+        if (actual is null || expected is null)
+        {
+            return;
+        }
+
+        try
+        {
+            var actualNode = JsonNode.Parse(actual ?? "");
+            var expectedNode = JsonNode.Parse(expected ?? "");
+
+            if (actualNode == null && expectedNode == null)
+            {
+                throw new ShouldAssertException(new ActualShouldlyMessage(actual, "Both JSON strings parsed to null").ToString());
+            }
+
+            if (actualNode == null || expectedNode == null)
+            {
+                return;
+            }
+
+            if (actualNode.IsEquivalentTo(expectedNode))
+            {
+                throw new ShouldAssertException(new ExpectedActualShouldlyMessage(expected, actual, errorMessage).ToString());
+            }
+        }
+        catch (JsonException ex)
+        {
+            throw new ShouldAssertException(new ActualShouldlyMessage(actual, $"Invalid JSON: {ex.Message}").ToString());
         }
     }
 
