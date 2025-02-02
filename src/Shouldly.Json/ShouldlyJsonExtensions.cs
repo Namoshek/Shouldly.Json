@@ -90,6 +90,45 @@ public static class ShouldlyJsonExtensions
     }
 
     /// <summary>
+    /// Asserts that the JSON represented by the expected string is a subtree of the JSON represented by the actual string.
+    /// A subtree means that all properties in the actual JSON must exist in the expected JSON with the same values,
+    /// but the actual JSON can have additional properties.
+    /// </summary>
+    /// <param name="actual">The actual JSON string to compare against.</param>
+    /// <param name="expected">The expected JSON string to check as a subtree.</param>
+    /// <param name="customMessage">An optional custom message to include in the exception if the assertion fails.</param>
+    /// <exception cref="ShouldAssertException">Thrown if the expected JSON is not a subtree of the actual JSON.</exception>
+    public static void ShouldHaveJsonSubtree(this string? actual, string? expected, string? customMessage = null)
+    {
+        var errorMessage = customMessage ?? "JSON should have expected JSON as subtree";
+        
+        if (actual is null && expected is null)
+        {
+            return;
+        }
+
+        if (actual is null || expected is null)
+        {
+            throw new ShouldAssertException(new ExpectedActualShouldlyMessage(expected, actual, errorMessage).ToString());
+        }
+
+        try
+        {
+            var actualNode = JsonNode.Parse(actual);
+            var expectedNode = JsonNode.Parse(expected);
+
+            if (!JsonHelper.IsJsonSubtree(expectedNode, actualNode))
+            {
+                throw new ShouldAssertException(new ExpectedActualShouldlyMessage(expected, actual, errorMessage).ToString());
+            }
+        }
+        catch (JsonException)
+        {
+            throw new ShouldAssertException(new ExpectedActualShouldlyMessage(expected, actual, $"{errorMessage} (invalid JSON provided)").ToString());
+        }
+    }
+
+    /// <summary>
     /// Asserts that a string is valid JSON.
     /// </summary>
     /// <remarks>
