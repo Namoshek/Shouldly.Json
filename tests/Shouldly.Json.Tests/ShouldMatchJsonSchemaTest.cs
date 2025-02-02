@@ -1,6 +1,6 @@
 namespace Shouldly;
 
-public class ShouldMatchJsonSchemaTests
+public class ShouldMatchJsonSchemaTest
 {
     [Fact]
     public void ShouldMatchJsonSchema_WithValidJson_ShouldNotThrow()

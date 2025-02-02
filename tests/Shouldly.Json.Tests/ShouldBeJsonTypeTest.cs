@@ -1,6 +1,6 @@
 namespace Shouldly;
 
-public class ShouldBeJsonTypeTests
+public class ShouldBeJsonTypeTest
 {
     [Theory]
     [InlineData(@"{}")]

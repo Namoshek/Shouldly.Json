@@ -1,6 +1,6 @@
 namespace Shouldly;
 
-public class ShouldHaveJsonArrayCountTests
+public class ShouldHaveJsonArrayCountTest
 {
     [Theory]
     [InlineData(@"[]", 0)]

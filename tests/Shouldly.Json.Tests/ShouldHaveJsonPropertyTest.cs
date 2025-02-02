@@ -1,6 +1,6 @@
 namespace Shouldly;
 
-public class ShouldHaveJsonPropertyTests
+public class ShouldHaveJsonPropertyTest
 {
     [Theory]
     [InlineData(@"{""prop"": ""value""}", "/prop")]
