@@ -22,7 +22,7 @@
   <ItemGroup>
     <PackageReference Include="Json.More.Net" Version="2.1.1" />
     <PackageReference Include="JsonPointer.Net" Version="5.3.1" />
-    <PackageReference Include="JsonSchema.Net" Version="7.3.1" />
+    <PackageReference Include="JsonSchema.Net" Version="7.3.2" />
     <PackageReference Include="Shouldly" Version="4.3.0" />
   </ItemGroup>
 
