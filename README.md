@@ -144,6 +144,28 @@ json.ShouldHaveJsonDateAfterOrEqualTo("/user/birthDate", new DateTime(1990, 1, 1
 json.ShouldHaveJsonDateBetween("/user/birthDate", new DateTime(1989, 1, 1), new DateTime(1991, 1, 1));
 ```
 
+### Regex Pattern Matching
+
+Use `ShouldHaveJsonValueMatchingRegex()` and `ShouldNotHaveJsonValueMatchingRegex()` to validate that string values at specific JSON pointer paths match or don't match regular expression patterns.
+
+```csharp
+var json = @"{
+    ""name"": ""John"",
+    ""email"": ""john@example.com"",
+    ""phone"": ""555-1234"",
+    ""invalid_email"": ""not-an-email""
+}";
+
+// Assert that values match specific patterns
+json.ShouldHaveJsonValueMatchingRegex("/name", @"^[A-Z][a-z]+$");
+json.ShouldHaveJsonValueMatchingRegex("/email", @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
+json.ShouldHaveJsonValueMatchingRegex("/phone", @"^\d{3}-\d{4}$");
+
+// Assert that values do NOT match patterns
+json.ShouldNotHaveJsonValueMatchingRegex("/invalid_email", @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
+json.ShouldNotHaveJsonValueMatchingRegex("/name", @"^[a-z]+$"); // Should not be all lowercase
+```
+
 ### Array Length Validation
 
 Use `ShouldHaveJsonArrayCount()` to check the length of an array. You can also provide a JSON pointer to check the length of an array at a specific path.
