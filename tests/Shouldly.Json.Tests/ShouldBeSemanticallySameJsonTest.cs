@@ -1,5 +1,7 @@
 ﻿namespace Shouldly;
 
+using System;
+
 public class ShouldBeSemanticallySameJsonTest
 {
     [Fact]
@@ -261,5 +263,66 @@ public class ShouldBeSemanticallySameJsonTest
 
         json1.ShouldBeSemanticallySameJson(json2);
         Should.Throw<ShouldAssertException>(() => json1.ShouldBeSemanticallySameJson(json3));
+    }
+
+    [Fact]
+    public void DifferentIntegerTypes_ShouldBeHandledCorrectly()
+    {
+        var json1 = @"{""byte"": 255, ""short"": 32767, ""int"": 2147483647}";
+        var json2 = @"{""byte"": 255.0, ""short"": 32767.0, ""int"": 2147483647.0}";
+        var json3 = @"{""byte"": ""255"", ""short"": ""32767"", ""int"": ""2147483647""}";
+
+        json1.ShouldBeSemanticallySameJson(json2);
+        Should.Throw<ShouldAssertException>(() => json1.ShouldBeSemanticallySameJson(json3));
+    }
+
+    [Fact]
+    public void CharacterValues_ShouldBeHandledCorrectly()
+    {
+        var json1 = @"{""char"": ""A""}";
+        var json2 = @"{""char"": ""A""}";
+        var json3 = @"{""char"": ""B""}";
+        var json4 = @"{""char"": 65}"; // ASCII value of 'A'
+
+        json1.ShouldBeSemanticallySameJson(json2);
+        Should.Throw<ShouldAssertException>(() => json1.ShouldBeSemanticallySameJson(json3));
+        Should.Throw<ShouldAssertException>(() => json1.ShouldBeSemanticallySameJson(json4));
+    }
+
+    [Fact]
+    public void GuidValues_ShouldBeHandledCorrectly()
+    {
+        var guid = Guid.NewGuid();
+        var json1 = $@"{{""guid"": ""{guid}""}}";
+        var json2 = $@"{{""guid"": ""{guid}""}}";
+        var json3 = $@"{{""guid"": ""{Guid.NewGuid()}""}}";
+
+        json1.ShouldBeSemanticallySameJson(json2);
+        Should.Throw<ShouldAssertException>(() => json1.ShouldBeSemanticallySameJson(json3));
+    }
+
+    [Fact]
+    public void TimeSpanValues_ShouldBeHandledCorrectly()
+    {
+        var timeSpan = TimeSpan.FromHours(2);
+        var json1 = $@"{{""timespan"": ""{timeSpan}""}}";
+        var json2 = $@"{{""timespan"": ""{timeSpan}""}}";
+        var json3 = $@"{{""timespan"": ""{TimeSpan.FromHours(3)}""}}";
+
+        json1.ShouldBeSemanticallySameJson(json2);
+        Should.Throw<ShouldAssertException>(() => json1.ShouldBeSemanticallySameJson(json3));
+    }
+
+    [Fact]
+    public void EnumValues_ShouldBeHandledCorrectly()
+    {
+        var json1 = @"{""enum"": ""Beta""}";
+        var json2 = @"{""enum"": ""Beta""}";
+        var json3 = @"{""enum"": ""Alpha""}";
+        var json4 = @"{""enum"": 1}"; // Numeric value
+
+        json1.ShouldBeSemanticallySameJson(json2);
+        Should.Throw<ShouldAssertException>(() => json1.ShouldBeSemanticallySameJson(json3));
+        Should.Throw<ShouldAssertException>(() => json1.ShouldBeSemanticallySameJson(json4));
     }
 }

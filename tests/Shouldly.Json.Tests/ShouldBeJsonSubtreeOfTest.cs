@@ -1,5 +1,7 @@
 namespace Shouldly;
 
+using System;
+
 public class ShouldBeJsonSubtreeOfTest
 {
     [Fact]
@@ -215,5 +217,76 @@ public class ShouldBeJsonSubtreeOfTest
         var fullSet = @"{""items"": [{""id"": 1}, {""id"": 2}]}";
 
         Should.Throw<ShouldAssertException>(() => subset.ShouldBeJsonSubtreeOf(fullSet));
+    }
+
+    [Fact]
+    public void NumericTypes_ShouldWork()
+    {
+        var subset = @"{""byte"": 255, ""short"": 32767}";
+        var fullSet = @"{""byte"": 255, ""short"": 32767, ""int"": 2147483647, ""active"": true}";
+
+        subset.ShouldBeJsonSubtreeOf(fullSet);
+    }
+
+    [Fact]
+    public void CharacterValues_ShouldWork()
+    {
+        var subset = @"{""char"": ""A"", ""specialChar"": ""\n""}";
+        var fullSet = @"{""char"": ""A"", ""specialChar"": ""\n"", ""unicodeChar"": ""€"", ""active"": true}";
+
+        subset.ShouldBeJsonSubtreeOf(fullSet);
+    }
+
+    [Fact]
+    public void GuidValues_ShouldWork()
+    {
+        var guid = Guid.NewGuid();
+        var subset = $@"{{""id"": ""{guid}""}}";
+        var fullSet = $@"{{""id"": ""{guid}"", ""name"": ""test"", ""active"": true}}";
+
+        subset.ShouldBeJsonSubtreeOf(fullSet);
+    }
+
+    [Fact]
+    public void TimeSpanValues_ShouldWork()
+    {
+        var timeSpan = TimeSpan.FromHours(2);
+        var subset = $@"{{""duration"": ""{timeSpan}""}}";
+        var fullSet = $@"{{""duration"": ""{timeSpan}"", ""name"": ""task"", ""completed"": false}}";
+
+        subset.ShouldBeJsonSubtreeOf(fullSet);
+    }
+
+    [Fact]
+    public void NullableValues_ShouldWork()
+    {
+        var subset = @"{""nullInt"": null, ""hasValue"": 42}";
+        var fullSet = @"{""nullInt"": null, ""hasValue"": 42, ""name"": ""test"", ""active"": true}";
+
+        subset.ShouldBeJsonSubtreeOf(fullSet);
+    }
+
+    [Fact]
+    public void MixedDataTypes_ShouldWork()
+    {
+        var guid = Guid.NewGuid();
+        var timeSpan = TimeSpan.FromMinutes(30);
+        var subset = $@"{{
+            ""id"": ""{guid}"",
+            ""byte"": 128,
+            ""char"": ""X"",
+            ""duration"": ""{timeSpan}""
+        }}";
+        var fullSet = $@"{{
+            ""id"": ""{guid}"",
+            ""byte"": 128,
+            ""char"": ""X"",
+            ""duration"": ""{timeSpan}"",
+            ""name"": ""complex"",
+            ""active"": true,
+            ""score"": 95.5
+        }}";
+
+        subset.ShouldBeJsonSubtreeOf(fullSet);
     }
 }

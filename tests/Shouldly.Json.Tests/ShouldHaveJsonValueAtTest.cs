@@ -139,6 +139,123 @@ public class ShouldHaveJsonValueAtTest
 
         json.ShouldHaveJsonValue("/value/name", expected, new CustomValueComparer());
     }
+
+    [Fact]
+    public void NumericTypes_ShouldWork()
+    {
+        var json = @"{
+            ""byteValue"": 255,
+            ""sbyteValue"": -128,
+            ""shortValue"": 32767,
+            ""ushortValue"": 65535
+        }";
+
+        json.ShouldHaveJsonValue<byte>("/byteValue", 255);
+        json.ShouldHaveJsonValue<sbyte>("/sbyteValue", -128);
+        json.ShouldHaveJsonValue<short>("/shortValue", 32767);
+        json.ShouldHaveJsonValue<ushort>("/ushortValue", 65535);
+    }
+
+    [Fact]
+    public void CharacterValues_ShouldWork()
+    {
+        var json = @"{
+            ""charValue"": ""A"",
+            ""specialChar"": ""\n"",
+            ""unicodeChar"": ""€""
+        }";
+
+        json.ShouldHaveJsonValue<char>("/charValue", 'A');
+        json.ShouldHaveJsonValue<char>("/specialChar", '\n');
+        json.ShouldHaveJsonValue<char>("/unicodeChar", '€');
+    }
+
+    [Fact]
+    public void GuidValues_ShouldWork()
+    {
+        var guid1 = Guid.NewGuid();
+        var guid2 = Guid.Empty;
+        var json = $@"{{
+            ""guidValue"": ""{guid1}"",
+            ""emptyGuid"": ""{guid2}""
+        }}";
+
+        json.ShouldHaveJsonValue<Guid>("/guidValue", guid1);
+        json.ShouldHaveJsonValue<Guid>("/emptyGuid", guid2);
+    }
+
+    [Fact]
+    public void TimeSpanValues_ShouldWork()
+    {
+        var timeSpan1 = TimeSpan.FromHours(2);
+        var timeSpan2 = TimeSpan.Zero;
+        var timeSpan3 = TimeSpan.FromDays(1);
+        var json = $@"{{
+            ""duration"": ""{timeSpan1}"",
+            ""zeroDuration"": ""{timeSpan2}"",
+            ""longDuration"": ""{timeSpan3}""
+        }}";
+
+        json.ShouldHaveJsonValue<TimeSpan>("/duration", timeSpan1);
+        json.ShouldHaveJsonValue<TimeSpan>("/zeroDuration", timeSpan2);
+        json.ShouldHaveJsonValue<TimeSpan>("/longDuration", timeSpan3);
+    }
+
+    [Fact]
+    public void NullableTypes_ShouldWork()
+    {
+        var json = @"{
+            ""nullInt"": null,
+            ""nullGuid"": null,
+            ""nullTimeSpan"": null,
+            ""nullByte"": null,
+            ""hasValueInt"": 42,
+            ""hasValueGuid"": ""12345678-1234-5678-9abc-123456789abc""
+        }";
+
+        json.ShouldHaveJsonValue<int?>("/nullInt", null);
+        json.ShouldHaveJsonValue<Guid?>("/nullGuid", null);
+        json.ShouldHaveJsonValue<TimeSpan?>("/nullTimeSpan", null);
+        json.ShouldHaveJsonValue<byte?>("/nullByte", null);
+        json.ShouldHaveJsonValue<int?>("/hasValueInt", 42);
+        json.ShouldHaveJsonValue<Guid?>("/hasValueGuid", new Guid("12345678-1234-5678-9abc-123456789abc"));
+    }
+
+    [Fact]
+    public void NestedNumericTypes_ShouldWork()
+    {
+        var json = @"{
+            ""data"": {
+                ""metrics"": {
+                    ""count"": 255,
+                    ""offset"": -32768
+                }
+            }
+        }";
+
+        json.ShouldHaveJsonValue<byte>("/data/metrics/count", 255);
+        json.ShouldHaveJsonValue<short>("/data/metrics/offset", -32768);
+    }
+
+    [Fact]
+    public void ArrayOfNewTypes_ShouldWork()
+    {
+        var guid = Guid.NewGuid();
+        var timeSpan = TimeSpan.FromMinutes(30);
+        var json = $@"{{
+            ""guids"": [""{guid}"", ""{Guid.Empty}""],
+            ""timeSpans"": [""{timeSpan}"", ""{TimeSpan.Zero}""],
+            ""bytes"": [0, 128, 255]
+        }}";
+
+        json.ShouldHaveJsonValue<Guid>("/guids/0", guid);
+        json.ShouldHaveJsonValue<Guid>("/guids/1", Guid.Empty);
+        json.ShouldHaveJsonValue<TimeSpan>("/timeSpans/0", timeSpan);
+        json.ShouldHaveJsonValue<TimeSpan>("/timeSpans/1", TimeSpan.Zero);
+        json.ShouldHaveJsonValue<byte>("/bytes/0", 0);
+        json.ShouldHaveJsonValue<byte>("/bytes/1", 128);
+        json.ShouldHaveJsonValue<byte>("/bytes/2", 255);
+    }
 }
 
 file class CustomValueComparer : IEqualityComparer<string>

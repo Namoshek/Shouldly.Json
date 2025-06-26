@@ -321,6 +321,101 @@ public class ShouldHaveJsonValueComparisonTest
     }
 
     [Fact]
+    public void NumericComparisons_Short_ShouldWork()
+    {
+        var json = @"{""value"": 42}";
+        const string pointer = "/value";
+        const short smaller = 41;
+        const short larger = 43;
+
+        json.ShouldHaveJsonValueLessThan(pointer, larger);
+        json.ShouldHaveJsonValueGreaterThan(pointer, smaller);
+        json.ShouldHaveJsonValueBetween(pointer, smaller, larger);
+    }
+
+    [Fact]
+    public void NumericComparisons_UShort_ShouldWork()
+    {
+        var json = @"{""value"": 42}";
+        const string pointer = "/value";
+        const ushort smaller = 41;
+        const ushort larger = 43;
+
+        json.ShouldHaveJsonValueLessThan(pointer, larger);
+        json.ShouldHaveJsonValueGreaterThan(pointer, smaller);
+        json.ShouldHaveJsonValueBetween(pointer, smaller, larger);
+    }
+
+    [Fact]
+    public void NumericComparisons_Byte_ShouldWork()
+    {
+        var json = @"{""value"": 42}";
+        const string pointer = "/value";
+        const byte smaller = 41;
+        const byte larger = 43;
+
+        json.ShouldHaveJsonValueLessThan(pointer, larger);
+        json.ShouldHaveJsonValueGreaterThan(pointer, smaller);
+        json.ShouldHaveJsonValueBetween(pointer, smaller, larger);
+    }
+
+    [Fact]
+    public void NumericComparisons_SByte_ShouldWork()
+    {
+        var json = @"{""value"": 42}";
+        const string pointer = "/value";
+        const sbyte smaller = 41;
+        const sbyte larger = 43;
+
+        json.ShouldHaveJsonValueLessThan(pointer, larger);
+        json.ShouldHaveJsonValueGreaterThan(pointer, smaller);
+        json.ShouldHaveJsonValueBetween(pointer, smaller, larger);
+    }
+
+    [Fact]
+    public void CharComparisons_ShouldWork()
+    {
+        var json = @"{""value"": ""B""}";
+        const string pointer = "/value";
+        const char smaller = 'A';
+        const char larger = 'C';
+
+        json.ShouldHaveJsonValueLessThan(pointer, larger);
+        json.ShouldHaveJsonValueGreaterThan(pointer, smaller);
+        json.ShouldHaveJsonValueBetween(pointer, smaller, larger);
+    }
+
+    [Fact]
+    public void GuidComparisons_ShouldWork()
+    {
+        var guid1 = new Guid("00000000-0000-0000-0000-000000000001");
+        var guid2 = new Guid("00000000-0000-0000-0000-000000000002");
+        var guid3 = new Guid("00000000-0000-0000-0000-000000000003");
+        
+        var json = $@"{{""value"": ""{guid2}""}}";
+        const string pointer = "/value";
+
+        json.ShouldHaveJsonValueLessThan(pointer, guid3);
+        json.ShouldHaveJsonValueGreaterThan(pointer, guid1);
+        json.ShouldHaveJsonValueBetween(pointer, guid1, guid3);
+    }
+
+    [Fact]
+    public void TimeSpanComparisons_ShouldWork()
+    {
+        var timeSpan1 = TimeSpan.FromMinutes(30);
+        var timeSpan2 = TimeSpan.FromHours(1);
+        var timeSpan3 = TimeSpan.FromHours(2);
+        
+        var json = $@"{{""value"": ""{timeSpan2}""}}";
+        const string pointer = "/value";
+
+        json.ShouldHaveJsonValueLessThan(pointer, timeSpan3);
+        json.ShouldHaveJsonValueGreaterThan(pointer, timeSpan1);
+        json.ShouldHaveJsonValueBetween(pointer, timeSpan1, timeSpan3);
+    }
+
+    [Fact]
     public void DateTimeComparisons_WithDifferentTimeZones_ShouldWork()
     {
         var utcNow = DateTimeOffset.UtcNow;
@@ -390,6 +485,86 @@ public class ShouldHaveJsonValueComparisonTest
         json.ShouldHaveJsonDateBefore("/unixEpoch", DateTime.UnixEpoch.AddSeconds(1));
         json.ShouldHaveJsonDateBetween("/leapYear", new DateTime(2024, 2, 28), new DateTime(2024, 3, 1));
         json.ShouldHaveJsonDateBetween("/milliseconds", new DateTime(2024, 1, 1, 0, 0, 0, 122), new DateTime(2024, 1, 1, 0, 0, 0, 124));
+    }
+
+    [Fact]
+    public void NumericComparisons_EdgeCasesForNewTypes_ShouldWork()
+    {
+        var json = @"{
+            ""maxByte"": 255,
+            ""minSByte"": -128,
+            ""maxShort"": 32767,
+            ""maxUShort"": 65535
+        }";
+
+        json.ShouldHaveJsonValueBetween("/maxByte", (byte)254, (byte)255);
+        json.ShouldHaveJsonValueBetween("/minSByte", (sbyte)-128, (sbyte)-127);
+        json.ShouldHaveJsonValueBetween("/maxShort", (short)32766, (short)32767);
+        json.ShouldHaveJsonValueBetween("/maxUShort", (ushort)65534, (ushort)65535);
+    }
+
+    [Fact]
+    public void CharComparisons_EdgeCases_ShouldWork()
+    {
+        var json = @"{
+            ""charA"": ""A"",
+            ""charZ"": ""Z"",
+            ""digit"": ""5""
+        }";
+
+        json.ShouldHaveJsonValueBetween("/charA", 'A', 'B');
+        json.ShouldHaveJsonValueBetween("/charZ", 'Y', 'Z');
+        json.ShouldHaveJsonValueBetween("/digit", '0', '9');
+    }
+
+    [Fact]
+    public void TimeSpanComparisons_EdgeCases_ShouldWork()
+    {
+        var json = $@"{{
+            ""zero"": ""{TimeSpan.Zero}"",
+            ""oneHour"": ""{TimeSpan.FromHours(1)}"",
+            ""oneDay"": ""{TimeSpan.FromDays(1)}""
+        }}";
+
+        json.ShouldHaveJsonValueBetween("/zero", TimeSpan.Zero, TimeSpan.FromSeconds(1));
+        json.ShouldHaveJsonValueBetween("/oneHour", TimeSpan.FromMinutes(59), TimeSpan.FromMinutes(61));
+        json.ShouldHaveJsonValueBetween("/oneDay", TimeSpan.FromHours(23), TimeSpan.FromHours(25));
+    }
+
+    [Fact]
+    public void NullableValueTypes_ShouldWork()
+    {
+        var json = @"{
+            ""nullInt"": null,
+            ""nullGuid"": null,
+            ""nullTimeSpan"": null,
+            ""nullByte"": null,
+            ""hasValueInt"": 42,
+            ""hasValueGuid"": ""00000000-0000-0000-0000-000000000001""
+        }";
+
+        json.ShouldHaveJsonValue<int?>("/nullInt", null);
+        json.ShouldHaveJsonValue<Guid?>("/nullGuid", null);
+        json.ShouldHaveJsonValue<TimeSpan?>("/nullTimeSpan", null);
+        json.ShouldHaveJsonValue<byte?>("/nullByte", null);
+        json.ShouldHaveJsonValue<int?>("/hasValueInt", 42);
+        json.ShouldHaveJsonValue<Guid?>("/hasValueGuid", new Guid("00000000-0000-0000-0000-000000000001"));
+    }
+
+    [Fact]
+    public void GuidComparisons_EdgeCases_ShouldWork()
+    {
+        var json = $@"{{
+            ""emptyGuid"": ""{Guid.Empty}"",
+            ""maxGuid"": ""ffffffff-ffff-ffff-ffff-ffffffffffff"",
+            ""testGuid"": ""12345678-1234-5678-9abc-123456789abc""
+        }}";
+
+        json.ShouldHaveJsonValueGreaterThan("/testGuid", Guid.Empty);
+        json.ShouldHaveJsonValueLessThan("/testGuid", new Guid("ffffffff-ffff-ffff-ffff-ffffffffffff"));
+        json.ShouldHaveJsonValueBetween("/testGuid", 
+            new Guid("00000000-0000-0000-0000-000000000000"), 
+            new Guid("ffffffff-ffff-ffff-ffff-ffffffffffff"));
     }
 
     [Fact]
