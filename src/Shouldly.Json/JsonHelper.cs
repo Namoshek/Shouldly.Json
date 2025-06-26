@@ -18,7 +18,18 @@ internal static class JsonHelper
         {
             (JsonObject actualObj, JsonObject expectedObj) => IsJsonObjectSubtree(actualObj, expectedObj),
             (JsonArray actualArr, JsonArray expectedArr) => IsJsonArraySubtree(actualArr, expectedArr),
-            (JsonValue actualVal, JsonValue expectedVal) => actualVal.IsEquivalentTo(expectedVal),
+            (JsonValue actualVal, JsonValue expectedVal) =>
+            {
+                if (actualVal.GetValueKind() == JsonValueKind.String
+                    && expectedVal.GetValueKind() == JsonValueKind.String
+                    && actualVal.TryGetValue<DateTimeOffset>(out var actualDate)
+                    && expectedVal.TryGetValue<DateTimeOffset>(out var expectedDate))
+                {
+                    return actualDate == expectedDate;
+                }
+                
+                return actualVal.IsEquivalentTo(expectedVal);
+            },
 
             _ => false,
         };
