@@ -1,5 +1,7 @@
 namespace Shouldly;
 
+using System;
+
 public class ShouldNotBeSemanticallySameJsonTest
 {
     [Theory]
@@ -79,5 +81,74 @@ public class ShouldNotBeSemanticallySameJsonTest
     public void ShouldNotBeSemanticallySameJson_WithDifferentFormatting_ShouldThrow(string actual, string expected)
     {
         Should.Throw<ShouldAssertException>(() => actual.ShouldNotBeSemanticallySameJson(expected));
+    }
+
+    [Theory]
+    [InlineData(@"{""byte"": 255}", @"{""byte"": 254}")]
+    [InlineData(@"{""short"": 32767}", @"{""short"": 32766}")]
+    [InlineData(@"{""sbyte"": -128}", @"{""sbyte"": -127}")]
+    [InlineData(@"{""ushort"": 65535}", @"{""ushort"": 65534}")]
+    public void ShouldNotBeSemanticallySameJson_WithDifferentNumericTypes_ShouldNotThrow(string actual, string expected)
+    {
+        actual.ShouldNotBeSemanticallySameJson(expected);
+    }
+
+    [Theory]
+    [InlineData(@"{""char"": ""A""}", @"{""char"": ""B""}")]
+    [InlineData(@"{""char"": ""A""}", @"{""char"": 65}")]  // ASCII value
+    [InlineData(@"{""char"": ""\n""}", @"{""char"": ""\t""}")]
+    public void ShouldNotBeSemanticallySameJson_WithDifferentCharValues_ShouldNotThrow(string actual, string expected)
+    {
+        actual.ShouldNotBeSemanticallySameJson(expected);
+    }
+
+    [Fact]
+    public void ShouldNotBeSemanticallySameJson_WithDifferentGuids_ShouldNotThrow()
+    {
+        var guid1 = Guid.NewGuid();
+        var guid2 = Guid.NewGuid();
+        var json1 = $@"{{""guid"": ""{guid1}""}}";
+        var json2 = $@"{{""guid"": ""{guid2}""}}";
+
+        json1.ShouldNotBeSemanticallySameJson(json2);
+    }
+
+    [Fact] 
+    public void ShouldNotBeSemanticallySameJson_WithDifferentTimeSpans_ShouldNotThrow()
+    {
+        var timeSpan1 = TimeSpan.FromHours(1);
+        var timeSpan2 = TimeSpan.FromHours(2);
+        var json1 = $@"{{""timespan"": ""{timeSpan1}""}}";
+        var json2 = $@"{{""timespan"": ""{timeSpan2}""}}";
+
+        json1.ShouldNotBeSemanticallySameJson(json2);
+    }
+
+    [Theory]
+    [InlineData(@"{""value"": null}", @"{""value"": 0}")]
+    [InlineData(@"{""value"": null}", @"{""value"": false}")]
+    [InlineData(@"{""value"": null}", @"{""value"": """"}")]
+    public void ShouldNotBeSemanticallySameJson_WithNullVsOtherTypes_ShouldNotThrow(string actual, string expected)
+    {
+        actual.ShouldNotBeSemanticallySameJson(expected);
+    }
+
+    [Fact]
+    public void ShouldNotBeSemanticallySameJson_WithStringifiedNumbers_ShouldNotThrow()
+    {
+        var json1 = @"{""byte"": 255, ""short"": 32767}";
+        var json2 = @"{""byte"": ""255"", ""short"": ""32767""}";
+
+        json1.ShouldNotBeSemanticallySameJson(json2);
+    }
+
+    [Fact]
+    public void ShouldNotBeSemanticallySameJson_WithGuidVsString_ShouldNotThrow()
+    {
+        var guid = Guid.NewGuid();
+        var json1 = $@"{{""id"": ""{guid}""}}";
+        var json2 = @"{""id"": ""not-a-guid""}";
+
+        json1.ShouldNotBeSemanticallySameJson(json2);
     }
 }
