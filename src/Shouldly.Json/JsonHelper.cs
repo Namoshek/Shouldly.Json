@@ -18,21 +18,28 @@ internal static class JsonHelper
         {
             (JsonObject actualObj, JsonObject expectedObj) => IsJsonObjectSubtree(actualObj, expectedObj),
             (JsonArray actualArr, JsonArray expectedArr) => IsJsonArraySubtree(actualArr, expectedArr),
-            (JsonValue actualVal, JsonValue expectedVal) =>
-            {
-                if (actualVal.GetValueKind() == JsonValueKind.String
-                    && expectedVal.GetValueKind() == JsonValueKind.String
-                    && actualVal.TryGetValue<DateTimeOffset>(out var actualDate)
-                    && expectedVal.TryGetValue<DateTimeOffset>(out var expectedDate))
-                {
-                    return actualDate == expectedDate;
-                }
-                
-                return actualVal.IsEquivalentTo(expectedVal);
-            },
+            (JsonValue actualVal, JsonValue expectedVal) => TryParseAsDates(actualVal, expectedVal, out var actualDate, out var expectedDate)
+                ? actualDate == expectedDate
+                : actualVal.IsEquivalentTo(expectedVal),
 
             _ => false,
         };
+    }
+
+    private static bool TryParseAsDates(JsonValue actualVal, JsonValue expectedVal, out DateTimeOffset actualDate, out DateTimeOffset expectedDate)
+    {
+        if (actualVal.GetValueKind() == JsonValueKind.String
+            && expectedVal.GetValueKind() == JsonValueKind.String
+            && actualVal.TryGetValue<DateTimeOffset>(out actualDate)
+            && expectedVal.TryGetValue<DateTimeOffset>(out expectedDate))
+        {
+            return true;
+        }
+
+        actualDate = default;
+        expectedDate = default;
+
+        return false;
     }
 
     internal static bool IsJsonObjectSubtree(JsonObject actual, JsonObject expected)
