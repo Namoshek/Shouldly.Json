@@ -5,8 +5,8 @@ public class ShouldHaveJsonSubtreeTest
     [Fact]
     public void SimpleObject_WhenSubset_ShouldNotThrow()
     {
-        var subset = @"{""name"": ""John""}";
-        var fullSet = @"{""name"": ""John"", ""age"": 30}";
+        var subset = @"{""name"": ""John"", ""createdAt"": ""2025-06-26T10:48:32.3127234+02:00""}";
+        var fullSet = @"{""name"": ""John"", ""age"": 30, ""createdAt"": ""2025-06-26T10:48:32.3127234+02:00""}";
 
         fullSet.ShouldHaveJsonSubtree(subset);
     }
@@ -14,12 +14,21 @@ public class ShouldHaveJsonSubtreeTest
     [Fact]
     public void SimpleObject_WhenNotSubset_ShouldThrow()
     {
-        var subset = @"{""name"": ""John"", ""age"": 31}";
-        var fullSet = @"{""name"": ""John"", ""age"": 30}";
+        var subset = @"{""name"": ""John"", ""age"": 31, ""createdAt"": ""2025-06-26T10:48:32.3127234+02:00""}";
+        var fullSet = @"{""name"": ""John"", ""age"": 30, ""createdAt"": ""2025-06-26T10:48:32.3127234+02:00""}";
 
         Should.Throw<ShouldAssertException>(() => fullSet.ShouldHaveJsonSubtree(subset));
     }
 
+    [Fact]
+    public void SimpleObject_WhenDateFormatDifferentButDateIsSame_ShouldNotThrow()
+    {
+        var subset = @"{""createdAt"": ""2025-06-26T10:48:32.3127230+02:00""}";
+        var fullSet = @"{""createdAt"": ""2025-06-26T10:48:32.312723+02:00""}";
+
+        fullSet.ShouldHaveJsonSubtree(subset);
+    }
+    
     [Fact]
     public void NestedObject_WhenSubset_ShouldNotThrow()
     {
