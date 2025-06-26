@@ -873,7 +873,7 @@ public static class ShouldlyJsonExtensions
         
         if (actual is null)
         {
-            throw new ShouldAssertException(new ActualShouldlyMessage(actual, errorMessage).ToString());
+            throw new ShouldAssertException(new ActualShouldlyMessage(actual, "JSON string is null").ToString());
         }
 
         Regex regexPattern;
@@ -900,9 +900,13 @@ public static class ShouldlyJsonExtensions
                 throw new ShouldAssertException(new ExpectedActualShouldlyMessage($"match regex '{regex}'", actualValue, errorMessage).ToString());
             }
         }
-        catch (Exception ex) when (ex is JsonException or PointerParseException)
+        catch (JsonException ex)
         {
-            throw new ShouldAssertException(new ActualShouldlyMessage(actual, $"{errorMessage}: {ex.Message}").ToString());
+            throw new ShouldAssertException(new ActualShouldlyMessage(actual, $"Invalid JSON: {ex.Message}").ToString());
+        }
+        catch (PointerParseException ex)
+        {
+            throw new ShouldAssertException(new ActualShouldlyMessage(actual, $"Invalid JSON pointer '{jsonPointer}': {ex.Message}").ToString());
         }
     }
 
@@ -922,7 +926,7 @@ public static class ShouldlyJsonExtensions
         
         if (actual is null)
         {
-            throw new ShouldAssertException(new ActualShouldlyMessage(actual, errorMessage).ToString());
+            throw new ShouldAssertException(new ActualShouldlyMessage(actual, "JSON string is null").ToString());
         }
 
         Regex regexPattern;
@@ -949,9 +953,13 @@ public static class ShouldlyJsonExtensions
                 throw new ShouldAssertException(new ExpectedActualShouldlyMessage($"not match regex '{regex}'", actualValue, errorMessage).ToString());
             }
         }
-        catch (Exception ex) when (ex is JsonException or PointerParseException)
+        catch (JsonException ex)
         {
-            throw new ShouldAssertException(new ActualShouldlyMessage(actual, $"{errorMessage}: {ex.Message}").ToString());
+            throw new ShouldAssertException(new ActualShouldlyMessage(actual, $"Invalid JSON: {ex.Message}").ToString());
+        }
+        catch (PointerParseException ex)
+        {
+            throw new ShouldAssertException(new ActualShouldlyMessage(actual, $"Invalid JSON pointer '{jsonPointer}': {ex.Message}").ToString());
         }
     }
 
