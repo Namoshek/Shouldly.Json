@@ -361,7 +361,15 @@ internal static class JsonComparisonEngine
                 }
                 catch (OverflowException)
                 {
-                    // Already handled above.
+                    // For extreme values that can't be represented as decimal, compare as double.
+                    var actualDouble = actual.GetValue<double>();
+                    if (actualDouble != expectedDouble)
+                    {
+                        var difference = JsonDifference.ValueMismatch(path, GetValueForDisplay(expected), GetValueForDisplay(actual));
+
+                        return JsonComparisonResult.Failure(difference);
+                    }
+
                     return JsonComparisonResult.Success();
                 }
             }
