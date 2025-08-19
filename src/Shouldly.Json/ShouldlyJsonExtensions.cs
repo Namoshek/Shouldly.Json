@@ -50,9 +50,13 @@ public static class ShouldlyJsonExtensions
                 throw new ShouldAssertException(new ActualShouldlyMessage(actual, "Both JSON strings parsed to null").ToString());
             }
 
-            if (!actualNode.IsEquivalentTo(expectedNode))
+            var comparisonResult = JsonComparisonEngine.CompareSemanticEquality(actualNode, expectedNode);
+            
+            if (!comparisonResult.IsEqual)
             {
-                throw new ShouldAssertException(new ExpectedActualShouldlyMessage(expected, actual, errorMessage).ToString());
+                var enhancedMessage = comparisonResult.GetErrorMessage(errorMessage);
+
+                throw new ShouldAssertException(new ExpectedActualShouldlyMessage(expected, actual, enhancedMessage).ToString());
             }
         }
         catch (JsonException)
@@ -89,9 +93,13 @@ public static class ShouldlyJsonExtensions
             var actualNode = JsonNode.Parse(actual);
             var expectedNode = JsonNode.Parse(expected);
 
-            if (!JsonHelper.IsJsonSubtree(actualNode, expectedNode))
+            var comparisonResult = JsonComparisonEngine.CompareSubtree(actualNode, expectedNode);
+            
+            if (!comparisonResult.IsEqual)
             {
-                throw new ShouldAssertException(new ExpectedActualShouldlyMessage(expected, actual, errorMessage).ToString());
+                var enhancedMessage = comparisonResult.GetErrorMessage(errorMessage);
+
+                throw new ShouldAssertException(new ExpectedActualShouldlyMessage(expected, actual, enhancedMessage).ToString());
             }
         }
         catch (JsonException)
@@ -128,9 +136,13 @@ public static class ShouldlyJsonExtensions
             var actualNode = JsonNode.Parse(actual);
             var expectedNode = JsonNode.Parse(expected);
 
-            if (!JsonHelper.IsJsonSubtree(expectedNode, actualNode))
+            var comparisonResult = JsonComparisonEngine.CompareSubtree(expectedNode, actualNode);
+            
+            if (!comparisonResult.IsEqual)
             {
-                throw new ShouldAssertException(new ExpectedActualShouldlyMessage(expected, actual, errorMessage).ToString());
+                var enhancedMessage = comparisonResult.GetErrorMessage(errorMessage);
+                
+                throw new ShouldAssertException(new ExpectedActualShouldlyMessage(expected, actual, enhancedMessage).ToString());
             }
         }
         catch (JsonException)
@@ -792,9 +804,13 @@ public static class ShouldlyJsonExtensions
             var actualNode = JsonNode.Parse(actual);
             var expectedNode = JsonNode.Parse(expected);
 
-            if (JsonHelper.IsJsonSubtree(actualNode, expectedNode))
+            var comparisonResult = JsonComparisonEngine.CompareSubtree(actualNode, expectedNode);
+
+            if (comparisonResult.IsEqual)
             {
-                throw new ShouldAssertException(new ExpectedActualShouldlyMessage(expected, actual, errorMessage).ToString());
+                var enhancedMessage = comparisonResult.GetErrorMessage(errorMessage);
+
+                throw new ShouldAssertException(new ExpectedActualShouldlyMessage(expected, actual, enhancedMessage).ToString());
             }
         }
         catch (JsonException)
