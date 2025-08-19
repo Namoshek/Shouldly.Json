@@ -3,7 +3,7 @@ namespace Shouldly;
 /// <summary>
 /// Represents a specific difference found during JSON comparison.
 /// </summary>
-public class JsonDifference
+internal class JsonDifference
 {
     /// <summary>
     /// Gets the JSON Pointer path where the difference was found.
@@ -166,21 +166,5 @@ public class JsonDifference
         difference.Description = JsonErrorMessageFormatter.FormatDifference(difference);
 
         return difference;
-    }
-
-    /// <summary>
-    /// Formats a value for display in error messages.
-    /// </summary>
-    /// <param name="value">The value to format.</param>
-    /// <returns>A formatted string representation of the value.</returns>
-    private static string FormatValue(object? value)
-    {
-        return value switch
-        {
-            null => "null",
-            string s => s,
-
-            _ => value.ToString() ?? "null",
-        };
     }
 }

@@ -8,7 +8,7 @@ using Json.Pointer;
 /// <summary>
 /// Engine for comparing JSON structures with detailed difference tracking.
 /// </summary>
-public static class JsonComparisonEngine
+internal static class JsonComparisonEngine
 {
     /// <summary>
     /// Compares two JSON nodes for semantic equality.

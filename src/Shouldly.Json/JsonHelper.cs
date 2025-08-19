@@ -6,7 +6,7 @@ using Json.Pointer;
 
 internal static class JsonHelper
 {
-    internal static T? GetValueAtPointer<T>(string? json, string pointer, bool allowNull = false)
+    public static T? GetValueAtPointer<T>(string? json, string pointer, bool allowNull = false)
     {
         if (string.IsNullOrEmpty(json))
         {

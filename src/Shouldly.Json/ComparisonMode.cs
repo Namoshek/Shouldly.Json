@@ -3,7 +3,7 @@ namespace Shouldly;
 /// <summary>
 /// Defines the different modes of JSON comparison.
 /// </summary>
-public enum ComparisonMode
+internal enum ComparisonMode
 {
     /// <summary>
     /// Semantic equality mode where both JSON structures must be exactly equivalent.

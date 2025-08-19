@@ -5,7 +5,7 @@ using System.Collections.Generic;
 /// <summary>
 /// Provides enhanced formatting for JSON comparison error messages.
 /// </summary>
-public static class JsonErrorMessageFormatter
+internal static class JsonErrorMessageFormatter
 {
     private static readonly Dictionary<JsonDifferenceType, string> ErrorTemplates = new()
     {

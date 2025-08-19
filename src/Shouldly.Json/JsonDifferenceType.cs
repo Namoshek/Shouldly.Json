@@ -3,7 +3,7 @@ namespace Shouldly;
 /// <summary>
 /// Represents the different types of differences that can be found during JSON comparison.
 /// </summary>
-public enum JsonDifferenceType
+internal enum JsonDifferenceType
 {
     /// <summary>
     /// A value mismatch where the same property has different values.

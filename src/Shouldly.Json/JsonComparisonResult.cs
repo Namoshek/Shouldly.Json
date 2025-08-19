@@ -3,7 +3,7 @@ namespace Shouldly;
 /// <summary>
 /// Represents the result of a JSON comparison operation.
 /// </summary>
-public class JsonComparisonResult
+internal class JsonComparisonResult
 {
     /// <summary>
     /// Gets a value indicating whether the JSON structures are equal.
