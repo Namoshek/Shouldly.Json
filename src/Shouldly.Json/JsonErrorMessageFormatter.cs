@@ -1,5 +1,6 @@
 namespace Shouldly;
 
+using System;
 using System.Collections.Generic;
 
 /// <summary>
@@ -129,7 +130,7 @@ internal static class JsonErrorMessageFormatter
             return message;
         }
 
-        return message.Substring(0, maxLength - 3) + "...";
+        return string.Concat(message.AsSpan(0, maxLength - 3), "...");
     }
 
     /// <summary>

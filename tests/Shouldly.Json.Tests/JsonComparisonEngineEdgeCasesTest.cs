@@ -290,7 +290,7 @@ public class JsonComparisonEngineEdgeCasesTest
         
         for (int i = 0; i < depth; i++)
         {
-            sb.Append("}");
+            sb.Append('}');
         }
         
         return sb.ToString();
