@@ -5,10 +5,14 @@ on:
     tags:
       - v*
 
+permissions:
+  id-token: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    permissions:
+      id-token: write
     steps:
       - uses: actions/checkout@v5
         with:
@@ -31,5 +35,11 @@ jobs:
         env:
           RELEASE_VERSION: ${{ steps.version_tag.outputs.version }}
 
+      - name: Login to nuget.org (OIDC)
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: Namoshek
+
       - name: Push NuGet packages to nuget.org
-        run: dotnet nuget push **/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+        run: dotnet nuget push **/*.nupkg --api-key ${{ steps.login.outputs.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
