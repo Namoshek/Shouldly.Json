@@ -645,21 +645,16 @@ public static class ShouldlyJsonExtensions
                 throw new ShouldAssertException(new ActualShouldlyMessage(actual, "Invalid JSON Schema").ToString());
             }
         }
-        catch (JsonException ex)
+        catch (Exception ex) when (ex is JsonException or ArgumentException)
         {
             throw new ShouldAssertException(new ActualShouldlyMessage(actual, $"Invalid JSON Schema: {ex.Message}").ToString());
         }
 
         try
         {
-            var jsonNode = JsonNode.Parse(actual);
+            using var jsonDocument = JsonDocument.Parse(actual);
 
-            if (jsonNode is null)
-            {
-                throw new ShouldAssertException(new ActualShouldlyMessage(actual, "JSON string parsed to null").ToString());
-            }
-
-            var evaluationResults = jsonSchema.Evaluate(jsonNode, new EvaluationOptions
+            var evaluationResults = jsonSchema.Evaluate(jsonDocument.RootElement, new EvaluationOptions
             {
                 OutputFormat = OutputFormat.List,
                 RequireFormatValidation = true,
@@ -672,7 +667,7 @@ public static class ShouldlyJsonExtensions
 
             if (!evaluationResults.IsValid)
             {
-                var errors = evaluationResults.Details.SelectMany(d => d.Errors?.Select(kvp => $"{kvp.Key}: {kvp.Value}") ?? []);
+                var errors = evaluationResults.Details?.SelectMany(d => d.Errors?.Select(kvp => $"{kvp.Key}: {kvp.Value}") ?? []) ?? [];
 
                 throw new ShouldAssertException(new ActualShouldlyMessage(actual, $"{errorMessage}:\n{string.Join("\n", errors)}").ToString());
             }
