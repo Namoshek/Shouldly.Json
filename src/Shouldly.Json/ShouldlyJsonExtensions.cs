@@ -645,11 +645,7 @@ public static class ShouldlyJsonExtensions
                 throw new ShouldAssertException(new ActualShouldlyMessage(actual, "Invalid JSON Schema").ToString());
             }
         }
-        catch (JsonException ex)
-        {
-            throw new ShouldAssertException(new ActualShouldlyMessage(actual, $"Invalid JSON Schema: {ex.Message}").ToString());
-        }
-        catch (ArgumentException ex)
+        catch (Exception ex) when (ex is JsonException or ArgumentException)
         {
             throw new ShouldAssertException(new ActualShouldlyMessage(actual, $"Invalid JSON Schema: {ex.Message}").ToString());
         }
