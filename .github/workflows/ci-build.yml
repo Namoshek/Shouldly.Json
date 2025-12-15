@@ -40,7 +40,7 @@ jobs:
           dotnet-version: ${{ matrix.dotnet-version }}
 
       - name: Cache SonarCloud packages
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         if: matrix.run-sonarqube-analysis
         with:
           path: ~\sonar\cache
@@ -50,7 +50,7 @@ jobs:
       - name: Cache SonarCloud scanner
         id: cache-sonar-scanner
         if: matrix.run-sonarqube-analysis
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: .\.sonar\scanner
           key: ${{ runner.os }}-sonar-scanner
