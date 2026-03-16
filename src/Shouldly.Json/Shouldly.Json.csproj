@@ -20,8 +20,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Json.More.Net" Version="3.0.0" />
-    <PackageReference Include="JsonPointer.Net" Version="7.0.0" />
+    <PackageReference Include="Json.More.Net" Version="3.0.1" />
+    <PackageReference Include="JsonPointer.Net" Version="7.0.1" />
     <PackageReference Include="JsonSchema.Net" Version="9.1.2" />
     <PackageReference Include="Shouldly" Version="4.3.0" />
   </ItemGroup>
