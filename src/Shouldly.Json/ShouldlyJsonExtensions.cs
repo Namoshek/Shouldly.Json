@@ -975,6 +975,662 @@ public static class ShouldlyJsonExtensions
     }
 
     /// <summary>
+    /// Asserts that all elements in the JSON array at the specified JSON Pointer (RFC 6901) path have a property
+    /// at the given property pointer path.
+    /// </summary>
+    /// <param name="actual">The JSON string to check.</param>
+    /// <param name="arrayPointer">The JSON Pointer path to the array.</param>
+    /// <param name="propertyPointer">The JSON Pointer path to the property within each array element.</param>
+    /// <param name="customMessage">An optional custom message to include in the exception if the assertion fails.</param>
+    /// <exception cref="ShouldAssertException">Thrown if any element in the array does not have the property at the given path.</exception>
+    public static void ShouldAllHaveJsonProperty(this string? actual, string arrayPointer, string propertyPointer, string? customMessage = null)
+    {
+        var errorMessage = customMessage ?? $"All elements in JSON array at pointer '{arrayPointer}' should have a property at pointer '{propertyPointer}'";
+
+        if (actual is null)
+        {
+            throw new ShouldAssertException(new ActualShouldlyMessage(actual, "JSON string is null").ToString());
+        }
+
+        try
+        {
+            var jsonNode = JsonNode.Parse(actual);
+            if (jsonNode is null)
+            {
+                throw new ShouldAssertException(new ActualShouldlyMessage(actual, "JSON string parsed to null").ToString());
+            }
+
+            var (array, propPointer) = ParseArrayAndPropertyPointers(jsonNode, arrayPointer, propertyPointer, actual);
+
+            var failedIndices = new List<int>();
+            for (var i = 0; i < array.Count; i++)
+            {
+                var element = array[i];
+                if (element is null || !propPointer.TryEvaluate(element, out _))
+                {
+                    failedIndices.Add(i);
+                }
+            }
+
+            if (failedIndices.Count > 0)
+            {
+                var indicesStr = string.Join(", ", failedIndices);
+                throw new ShouldAssertException(new ActualShouldlyMessage(actual,
+                    $"{errorMessage} (failed at indices: {indicesStr})").ToString());
+            }
+        }
+        catch (JsonException ex)
+        {
+            throw new ShouldAssertException(new ActualShouldlyMessage(actual, $"Invalid JSON: {ex.Message}").ToString());
+        }
+        catch (PointerParseException ex)
+        {
+            throw new ShouldAssertException(new ActualShouldlyMessage(actual, $"Invalid JSON pointer: {ex.Message}").ToString());
+        }
+    }
+
+    /// <summary>
+    /// Asserts that no element in the JSON array at the specified JSON Pointer (RFC 6901) path has a property
+    /// at the given property pointer path.
+    /// </summary>
+    /// <param name="actual">The JSON string to check.</param>
+    /// <param name="arrayPointer">The JSON Pointer path to the array.</param>
+    /// <param name="propertyPointer">The JSON Pointer path to the property within each array element.</param>
+    /// <param name="customMessage">An optional custom message to include in the exception if the assertion fails.</param>
+    /// <exception cref="ShouldAssertException">Thrown if any element in the array has the property at the given path.</exception>
+    public static void ShouldAllNotHaveJsonProperty(this string? actual, string arrayPointer, string propertyPointer, string? customMessage = null)
+    {
+        var errorMessage = customMessage ?? $"All elements in JSON array at pointer '{arrayPointer}' should not have a property at pointer '{propertyPointer}'";
+
+        if (actual is null)
+        {
+            throw new ShouldAssertException(new ActualShouldlyMessage(actual, "JSON string is null").ToString());
+        }
+
+        try
+        {
+            var jsonNode = JsonNode.Parse(actual);
+            if (jsonNode is null)
+            {
+                throw new ShouldAssertException(new ActualShouldlyMessage(actual, "JSON string parsed to null").ToString());
+            }
+
+            var (array, propPointer) = ParseArrayAndPropertyPointers(jsonNode, arrayPointer, propertyPointer, actual);
+
+            var failedIndices = new List<int>();
+            for (var i = 0; i < array.Count; i++)
+            {
+                var element = array[i];
+                if (element is not null && propPointer.TryEvaluate(element, out _))
+                {
+                    failedIndices.Add(i);
+                }
+            }
+
+            if (failedIndices.Count > 0)
+            {
+                var indicesStr = string.Join(", ", failedIndices);
+                throw new ShouldAssertException(new ActualShouldlyMessage(actual,
+                    $"{errorMessage} (failed at indices: {indicesStr})").ToString());
+            }
+        }
+        catch (JsonException ex)
+        {
+            throw new ShouldAssertException(new ActualShouldlyMessage(actual, $"Invalid JSON: {ex.Message}").ToString());
+        }
+        catch (PointerParseException ex)
+        {
+            throw new ShouldAssertException(new ActualShouldlyMessage(actual, $"Invalid JSON pointer: {ex.Message}").ToString());
+        }
+    }
+
+    /// <summary>
+    /// Asserts that all elements in the JSON array at the specified JSON Pointer (RFC 6901) path have a property
+    /// at the given property pointer that matches the expected value.
+    /// </summary>
+    /// <typeparam name="T">The type of the expected value.</typeparam>
+    /// <param name="actual">The JSON string to check.</param>
+    /// <param name="arrayPointer">The JSON Pointer path to the array.</param>
+    /// <param name="propertyPointer">The JSON Pointer path to the property within each array element.</param>
+    /// <param name="expectedValue">The expected value to compare against.</param>
+    /// <param name="comparer">An optional equality comparer to use for the comparison.</param>
+    /// <param name="customMessage">An optional custom message to include in the exception if the assertion fails.</param>
+    /// <exception cref="ShouldAssertException">Thrown if any element in the array does not have the expected value at the given property path.</exception>
+    public static void ShouldAllHaveJsonValue<T>(
+        this string? actual,
+        string arrayPointer,
+        string propertyPointer,
+        T expectedValue,
+        IEqualityComparer<T>? comparer = null,
+        string? customMessage = null)
+    {
+        var errorMessage = customMessage ?? $"All elements in JSON array at pointer '{arrayPointer}' should have value '{expectedValue}' at property '{propertyPointer}'";
+
+        if (actual is null)
+        {
+            throw new ShouldAssertException(new ActualShouldlyMessage(actual, "JSON string is null").ToString());
+        }
+
+        try
+        {
+            var jsonNode = JsonNode.Parse(actual);
+            if (jsonNode is null)
+            {
+                throw new ShouldAssertException(new ActualShouldlyMessage(actual, "JSON string parsed to null").ToString());
+            }
+
+            var (array, propPointer) = ParseArrayAndPropertyPointers(jsonNode, arrayPointer, propertyPointer, actual);
+
+            var failures = new List<string>();
+            for (var i = 0; i < array.Count; i++)
+            {
+                var element = array[i];
+                if (element is null || !propPointer.TryEvaluate(element, out var result))
+                {
+                    failures.Add($"index {i}: (missing)");
+                    continue;
+                }
+
+                object? actualValue;
+                try
+                {
+                    if (result is null)
+                    {
+                        actualValue = null;
+                    }
+                    else
+                    {
+                        actualValue = result.Deserialize<T>();
+                    }
+                }
+                catch (JsonException)
+                {
+                    failures.Add($"index {i}: (type mismatch)");
+                    continue;
+                }
+
+                var areEqual = comparer != null
+                    ? comparer.Equals((T?)actualValue, expectedValue)
+                    : EqualityComparer<T>.Default.Equals((T?)actualValue!, expectedValue);
+
+                if (!areEqual)
+                {
+                    failures.Add($"index {i}: '{actualValue}'");
+                }
+            }
+
+            if (failures.Count > 0)
+            {
+                var failureDesc = string.Join(", ", failures);
+                throw new ShouldAssertException(new ExpectedActualShouldlyMessage(
+                    expectedValue,
+                    $"differing values at {failureDesc}",
+                    errorMessage).ToString());
+            }
+        }
+        catch (JsonException ex)
+        {
+            throw new ShouldAssertException(new ActualShouldlyMessage(actual, $"Invalid JSON: {ex.Message}").ToString());
+        }
+        catch (PointerParseException ex)
+        {
+            throw new ShouldAssertException(new ActualShouldlyMessage(actual, $"Invalid JSON pointer: {ex.Message}").ToString());
+        }
+    }
+
+    /// <summary>
+    /// Asserts that all numeric values in the JSON array at the specified JSON Pointer (RFC 6901) path are less than the given value.
+    /// </summary>
+    /// <typeparam name="T">The numeric type to compare (must implement IComparable{T}).</typeparam>
+    /// <param name="actual">The JSON string to check.</param>
+    /// <param name="arrayPointer">The JSON Pointer path to the array.</param>
+    /// <param name="propertyPointer">The JSON Pointer path to the property within each array element.</param>
+    /// <param name="value">The value to compare against.</param>
+    /// <param name="customMessage">An optional custom message to include in the exception if the assertion fails.</param>
+    /// <exception cref="ShouldAssertException">Thrown if any element value is not less than the given value.</exception>
+    public static void ShouldAllHaveJsonValueLessThan<T>(this string? actual, string arrayPointer, string propertyPointer, T value, string? customMessage = null)
+        where T : struct, IComparable<T>
+    {
+        var values = GetAllStructValuesFromArrayElements<T>(actual, arrayPointer, propertyPointer, customMessage);
+        var errorMessage = customMessage ?? $"All elements in JSON array at '{arrayPointer}' should have value at '{propertyPointer}' less than {value}";
+
+        var failedItems = values.Where(x => x.Value.CompareTo(value) >= 0).ToList();
+        if (failedItems.Count > 0)
+        {
+            var failureDesc = string.Join(", ", failedItems.Select(f => $"index {f.Index}: {f.Value}"));
+            throw new ShouldAssertException(new ExpectedActualShouldlyMessage(
+                $"less than {value} at all indices",
+                $"failing values: {failureDesc}",
+                errorMessage).ToString());
+        }
+    }
+
+    /// <summary>
+    /// Asserts that all numeric values in the JSON array at the specified JSON Pointer (RFC 6901) path are less than or equal to the given value.
+    /// </summary>
+    /// <typeparam name="T">The numeric type to compare (must implement IComparable{T}).</typeparam>
+    /// <param name="actual">The JSON string to check.</param>
+    /// <param name="arrayPointer">The JSON Pointer path to the array.</param>
+    /// <param name="propertyPointer">The JSON Pointer path to the property within each array element.</param>
+    /// <param name="value">The value to compare against.</param>
+    /// <param name="customMessage">An optional custom message to include in the exception if the assertion fails.</param>
+    /// <exception cref="ShouldAssertException">Thrown if any element value is not less than or equal to the given value.</exception>
+    public static void ShouldAllHaveJsonValueLessThanOrEqualTo<T>(this string? actual, string arrayPointer, string propertyPointer, T value, string? customMessage = null)
+        where T : struct, IComparable<T>
+    {
+        var values = GetAllStructValuesFromArrayElements<T>(actual, arrayPointer, propertyPointer, customMessage);
+        var errorMessage = customMessage ?? $"All elements in JSON array at '{arrayPointer}' should have value at '{propertyPointer}' less than or equal to {value}";
+
+        var failedItems = values.Where(x => x.Value.CompareTo(value) > 0).ToList();
+        if (failedItems.Count > 0)
+        {
+            var failureDesc = string.Join(", ", failedItems.Select(f => $"index {f.Index}: {f.Value}"));
+            throw new ShouldAssertException(new ExpectedActualShouldlyMessage(
+                $"less than or equal to {value} at all indices",
+                $"failing values: {failureDesc}",
+                errorMessage).ToString());
+        }
+    }
+
+    /// <summary>
+    /// Asserts that all numeric values in the JSON array at the specified JSON Pointer (RFC 6901) path are greater than the given value.
+    /// </summary>
+    /// <typeparam name="T">The numeric type to compare (must implement IComparable{T}).</typeparam>
+    /// <param name="actual">The JSON string to check.</param>
+    /// <param name="arrayPointer">The JSON Pointer path to the array.</param>
+    /// <param name="propertyPointer">The JSON Pointer path to the property within each array element.</param>
+    /// <param name="value">The value to compare against.</param>
+    /// <param name="customMessage">An optional custom message to include in the exception if the assertion fails.</param>
+    /// <exception cref="ShouldAssertException">Thrown if any element value is not greater than the given value.</exception>
+    public static void ShouldAllHaveJsonValueGreaterThan<T>(this string? actual, string arrayPointer, string propertyPointer, T value, string? customMessage = null)
+        where T : struct, IComparable<T>
+    {
+        var values = GetAllStructValuesFromArrayElements<T>(actual, arrayPointer, propertyPointer, customMessage);
+        var errorMessage = customMessage ?? $"All elements in JSON array at '{arrayPointer}' should have value at '{propertyPointer}' greater than {value}";
+
+        var failedItems = values.Where(x => x.Value.CompareTo(value) <= 0).ToList();
+        if (failedItems.Count > 0)
+        {
+            var failureDesc = string.Join(", ", failedItems.Select(f => $"index {f.Index}: {f.Value}"));
+            throw new ShouldAssertException(new ExpectedActualShouldlyMessage(
+                $"greater than {value} at all indices",
+                $"failing values: {failureDesc}",
+                errorMessage).ToString());
+        }
+    }
+
+    /// <summary>
+    /// Asserts that all numeric values in the JSON array at the specified JSON Pointer (RFC 6901) path are greater than or equal to the given value.
+    /// </summary>
+    /// <typeparam name="T">The numeric type to compare (must implement IComparable{T}).</typeparam>
+    /// <param name="actual">The JSON string to check.</param>
+    /// <param name="arrayPointer">The JSON Pointer path to the array.</param>
+    /// <param name="propertyPointer">The JSON Pointer path to the property within each array element.</param>
+    /// <param name="value">The value to compare against.</param>
+    /// <param name="customMessage">An optional custom message to include in the exception if the assertion fails.</param>
+    /// <exception cref="ShouldAssertException">Thrown if any element value is not greater than or equal to the given value.</exception>
+    public static void ShouldAllHaveJsonValueGreaterThanOrEqualTo<T>(this string? actual, string arrayPointer, string propertyPointer, T value, string? customMessage = null)
+        where T : struct, IComparable<T>
+    {
+        var values = GetAllStructValuesFromArrayElements<T>(actual, arrayPointer, propertyPointer, customMessage);
+        var errorMessage = customMessage ?? $"All elements in JSON array at '{arrayPointer}' should have value at '{propertyPointer}' greater than or equal to {value}";
+
+        var failedItems = values.Where(x => x.Value.CompareTo(value) < 0).ToList();
+        if (failedItems.Count > 0)
+        {
+            var failureDesc = string.Join(", ", failedItems.Select(f => $"index {f.Index}: {f.Value}"));
+            throw new ShouldAssertException(new ExpectedActualShouldlyMessage(
+                $"greater than or equal to {value} at all indices",
+                $"failing values: {failureDesc}",
+                errorMessage).ToString());
+        }
+    }
+
+    /// <summary>
+    /// Asserts that all numeric values in the JSON array at the specified JSON Pointer (RFC 6901) path are between the given minimum and maximum values (inclusive).
+    /// </summary>
+    /// <typeparam name="T">The numeric type to compare (must implement IComparable{T}).</typeparam>
+    /// <param name="actual">The JSON string to check.</param>
+    /// <param name="arrayPointer">The JSON Pointer path to the array.</param>
+    /// <param name="propertyPointer">The JSON Pointer path to the property within each array element.</param>
+    /// <param name="min">The minimum value to compare against.</param>
+    /// <param name="max">The maximum value to compare against.</param>
+    /// <param name="customMessage">An optional custom message to include in the exception if the assertion fails.</param>
+    /// <exception cref="ShouldAssertException">Thrown if any element value is not between the given minimum and maximum values.</exception>
+    public static void ShouldAllHaveJsonValueBetween<T>(this string? actual, string arrayPointer, string propertyPointer, T min, T max, string? customMessage = null)
+        where T : struct, IComparable<T>
+    {
+        var values = GetAllStructValuesFromArrayElements<T>(actual, arrayPointer, propertyPointer, customMessage);
+        var errorMessage = customMessage ?? $"All elements in JSON array at '{arrayPointer}' should have value at '{propertyPointer}' between {min} and {max}";
+
+        var failedItems = values.Where(x => x.Value.CompareTo(min) < 0 || x.Value.CompareTo(max) > 0).ToList();
+        if (failedItems.Count > 0)
+        {
+            var failureDesc = string.Join(", ", failedItems.Select(f => $"index {f.Index}: {f.Value}"));
+            throw new ShouldAssertException(new ExpectedActualShouldlyMessage(
+                $"between {min} and {max} at all indices",
+                $"failing values: {failureDesc}",
+                errorMessage).ToString());
+        }
+    }
+
+    /// <summary>
+    /// Asserts that all date/time values in the JSON array at the specified JSON Pointer (RFC 6901) path are before the given value.
+    /// </summary>
+    /// <typeparam name="T">The date/time type to compare (must implement IComparable{T}).</typeparam>
+    /// <param name="actual">The JSON string to check.</param>
+    /// <param name="arrayPointer">The JSON Pointer path to the array.</param>
+    /// <param name="propertyPointer">The JSON Pointer path to the property within each array element.</param>
+    /// <param name="value">The value to compare against.</param>
+    /// <param name="customMessage">An optional custom message to include in the exception if the assertion fails.</param>
+    /// <exception cref="ShouldAssertException">Thrown if any element date/time is not before the given value.</exception>
+    public static void ShouldAllHaveJsonDateBefore<T>(this string? actual, string arrayPointer, string propertyPointer, T value, string? customMessage = null)
+        where T : struct, IComparable<T>
+    {
+        var values = GetAllStructValuesFromArrayElements<T>(actual, arrayPointer, propertyPointer, customMessage);
+        var errorMessage = customMessage ?? $"All elements in JSON array at '{arrayPointer}' should have date/time at '{propertyPointer}' before {value}";
+
+        var failedItems = values.Where(x => x.Value.CompareTo(value) >= 0).ToList();
+        if (failedItems.Count > 0)
+        {
+            var failureDesc = string.Join(", ", failedItems.Select(f => $"index {f.Index}: {f.Value}"));
+            throw new ShouldAssertException(new ExpectedActualShouldlyMessage(
+                $"before {value} at all indices",
+                $"failing values: {failureDesc}",
+                errorMessage).ToString());
+        }
+    }
+
+    /// <summary>
+    /// Asserts that all date/time values in the JSON array at the specified JSON Pointer (RFC 6901) path are before or equal to the given value.
+    /// </summary>
+    /// <typeparam name="T">The date/time type to compare (must implement IComparable{T}).</typeparam>
+    /// <param name="actual">The JSON string to check.</param>
+    /// <param name="arrayPointer">The JSON Pointer path to the array.</param>
+    /// <param name="propertyPointer">The JSON Pointer path to the property within each array element.</param>
+    /// <param name="value">The value to compare against.</param>
+    /// <param name="customMessage">An optional custom message to include in the exception if the assertion fails.</param>
+    /// <exception cref="ShouldAssertException">Thrown if any element date/time is not before or equal to the given value.</exception>
+    public static void ShouldAllHaveJsonDateBeforeOrEqualTo<T>(this string? actual, string arrayPointer, string propertyPointer, T value, string? customMessage = null)
+        where T : struct, IComparable<T>
+    {
+        var values = GetAllStructValuesFromArrayElements<T>(actual, arrayPointer, propertyPointer, customMessage);
+        var errorMessage = customMessage ?? $"All elements in JSON array at '{arrayPointer}' should have date/time at '{propertyPointer}' before or equal to {value}";
+
+        var failedItems = values.Where(x => x.Value.CompareTo(value) > 0).ToList();
+        if (failedItems.Count > 0)
+        {
+            var failureDesc = string.Join(", ", failedItems.Select(f => $"index {f.Index}: {f.Value}"));
+            throw new ShouldAssertException(new ExpectedActualShouldlyMessage(
+                $"before or equal to {value} at all indices",
+                $"failing values: {failureDesc}",
+                errorMessage).ToString());
+        }
+    }
+
+    /// <summary>
+    /// Asserts that all date/time values in the JSON array at the specified JSON Pointer (RFC 6901) path are after the given value.
+    /// </summary>
+    /// <typeparam name="T">The date/time type to compare (must implement IComparable{T}).</typeparam>
+    /// <param name="actual">The JSON string to check.</param>
+    /// <param name="arrayPointer">The JSON Pointer path to the array.</param>
+    /// <param name="propertyPointer">The JSON Pointer path to the property within each array element.</param>
+    /// <param name="value">The value to compare against.</param>
+    /// <param name="customMessage">An optional custom message to include in the exception if the assertion fails.</param>
+    /// <exception cref="ShouldAssertException">Thrown if any element date/time is not after the given value.</exception>
+    public static void ShouldAllHaveJsonDateAfter<T>(this string? actual, string arrayPointer, string propertyPointer, T value, string? customMessage = null)
+        where T : struct, IComparable<T>
+    {
+        var values = GetAllStructValuesFromArrayElements<T>(actual, arrayPointer, propertyPointer, customMessage);
+        var errorMessage = customMessage ?? $"All elements in JSON array at '{arrayPointer}' should have date/time at '{propertyPointer}' after {value}";
+
+        var failedItems = values.Where(x => x.Value.CompareTo(value) <= 0).ToList();
+        if (failedItems.Count > 0)
+        {
+            var failureDesc = string.Join(", ", failedItems.Select(f => $"index {f.Index}: {f.Value}"));
+            throw new ShouldAssertException(new ExpectedActualShouldlyMessage(
+                $"after {value} at all indices",
+                $"failing values: {failureDesc}",
+                errorMessage).ToString());
+        }
+    }
+
+    /// <summary>
+    /// Asserts that all date/time values in the JSON array at the specified JSON Pointer (RFC 6901) path are after or equal to the given value.
+    /// </summary>
+    /// <typeparam name="T">The date/time type to compare (must implement IComparable{T}).</typeparam>
+    /// <param name="actual">The JSON string to check.</param>
+    /// <param name="arrayPointer">The JSON Pointer path to the array.</param>
+    /// <param name="propertyPointer">The JSON Pointer path to the property within each array element.</param>
+    /// <param name="value">The value to compare against.</param>
+    /// <param name="customMessage">An optional custom message to include in the exception if the assertion fails.</param>
+    /// <exception cref="ShouldAssertException">Thrown if any element date/time is not after or equal to the given value.</exception>
+    public static void ShouldAllHaveJsonDateAfterOrEqualTo<T>(this string? actual, string arrayPointer, string propertyPointer, T value, string? customMessage = null)
+        where T : struct, IComparable<T>
+    {
+        var values = GetAllStructValuesFromArrayElements<T>(actual, arrayPointer, propertyPointer, customMessage);
+        var errorMessage = customMessage ?? $"All elements in JSON array at '{arrayPointer}' should have date/time at '{propertyPointer}' after or equal to {value}";
+
+        var failedItems = values.Where(x => x.Value.CompareTo(value) < 0).ToList();
+        if (failedItems.Count > 0)
+        {
+            var failureDesc = string.Join(", ", failedItems.Select(f => $"index {f.Index}: {f.Value}"));
+            throw new ShouldAssertException(new ExpectedActualShouldlyMessage(
+                $"after or equal to {value} at all indices",
+                $"failing values: {failureDesc}",
+                errorMessage).ToString());
+        }
+    }
+
+    /// <summary>
+    /// Asserts that all date/time values in the JSON array at the specified JSON Pointer (RFC 6901) path are between the given start (inclusive) and end (exclusive) values.
+    /// </summary>
+    /// <typeparam name="T">The date/time type to compare (must implement IComparable{T}).</typeparam>
+    /// <param name="actual">The JSON string to check.</param>
+    /// <param name="arrayPointer">The JSON Pointer path to the array.</param>
+    /// <param name="propertyPointer">The JSON Pointer path to the property within each array element.</param>
+    /// <param name="start">The inclusive start value of the range.</param>
+    /// <param name="end">The exclusive end value of the range.</param>
+    /// <param name="customMessage">An optional custom message to include in the exception if the assertion fails.</param>
+    /// <exception cref="ShouldAssertException">Thrown if any element date/time is not within the specified range.</exception>
+    public static void ShouldAllHaveJsonDateBetween<T>(this string? actual, string arrayPointer, string propertyPointer, T start, T end, string? customMessage = null)
+        where T : struct, IComparable<T>
+    {
+        var values = GetAllStructValuesFromArrayElements<T>(actual, arrayPointer, propertyPointer, customMessage);
+        var errorMessage = customMessage ?? $"All elements in JSON array at '{arrayPointer}' should have date at '{propertyPointer}' between {start} (inclusive) and {end} (exclusive)";
+
+        var failedItems = values.Where(x => x.Value.CompareTo(start) < 0 || x.Value.CompareTo(end) >= 0).ToList();
+        if (failedItems.Count > 0)
+        {
+            var failureDesc = string.Join(", ", failedItems.Select(f => $"index {f.Index}: {f.Value}"));
+            throw new ShouldAssertException(new ExpectedActualShouldlyMessage(
+                $"between {start} (inclusive) and {end} (exclusive) at all indices",
+                $"failing values: {failureDesc}",
+                errorMessage).ToString());
+        }
+    }
+
+    /// <summary>
+    /// Asserts that all string values in the JSON array at the specified JSON Pointer (RFC 6901) path match the given regular expression.
+    /// </summary>
+    /// <param name="actual">The JSON string to check.</param>
+    /// <param name="arrayPointer">The JSON Pointer path to the array.</param>
+    /// <param name="propertyPointer">The JSON Pointer path to the string property within each array element.</param>
+    /// <param name="regex">The regular expression pattern to match against.</param>
+    /// <param name="customMessage">An optional custom message to include in the exception if the assertion fails.</param>
+    /// <exception cref="ShouldAssertException">Thrown if any element value does not match the regex pattern.</exception>
+    public static void ShouldAllHaveJsonValueMatchingRegex(this string? actual, string arrayPointer, string propertyPointer, string regex, string? customMessage = null)
+    {
+        var errorMessage = customMessage ?? $"All elements in JSON array at pointer '{arrayPointer}' should have value at '{propertyPointer}' matching regex pattern '{regex}'";
+
+        if (actual is null)
+        {
+            throw new ShouldAssertException(new ActualShouldlyMessage(actual, "JSON string is null").ToString());
+        }
+
+        Regex regexPattern;
+        try
+        {
+            regexPattern = new Regex(regex);
+        }
+        catch (ArgumentException ex)
+        {
+            throw new ShouldAssertException(new ActualShouldlyMessage(actual, $"{errorMessage}: Invalid regex pattern - {ex.Message}").ToString());
+        }
+
+        try
+        {
+            var jsonNode = JsonNode.Parse(actual);
+            if (jsonNode is null)
+            {
+                throw new ShouldAssertException(new ActualShouldlyMessage(actual, "JSON string parsed to null").ToString());
+            }
+
+            var (array, propPointer) = ParseArrayAndPropertyPointers(jsonNode, arrayPointer, propertyPointer, actual);
+
+            var failures = new List<string>();
+            for (var i = 0; i < array.Count; i++)
+            {
+                var element = array[i];
+                if (element is null || !propPointer.TryEvaluate(element, out var result))
+                {
+                    failures.Add($"index {i}: (missing)");
+                    continue;
+                }
+
+                string? actualValue;
+                try
+                {
+                    actualValue = result?.Deserialize<string>();
+                }
+                catch (JsonException)
+                {
+                    failures.Add($"index {i}: (not a string)");
+                    continue;
+                }
+
+                if (actualValue is null)
+                {
+                    failures.Add($"index {i}: (null)");
+                    continue;
+                }
+
+                if (!regexPattern.IsMatch(actualValue))
+                {
+                    failures.Add($"index {i}: '{actualValue}'");
+                }
+            }
+
+            if (failures.Count > 0)
+            {
+                var failureDesc = string.Join(", ", failures);
+                throw new ShouldAssertException(new ExpectedActualShouldlyMessage(
+                    $"match regex '{regex}' at all indices",
+                    $"failing values: {failureDesc}",
+                    errorMessage).ToString());
+            }
+        }
+        catch (JsonException ex)
+        {
+            throw new ShouldAssertException(new ActualShouldlyMessage(actual, $"Invalid JSON: {ex.Message}").ToString());
+        }
+        catch (PointerParseException ex)
+        {
+            throw new ShouldAssertException(new ActualShouldlyMessage(actual, $"Invalid JSON pointer: {ex.Message}").ToString());
+        }
+    }
+
+    /// <summary>
+    /// Asserts that no string value in the JSON array at the specified JSON Pointer (RFC 6901) path matches the given regular expression.
+    /// </summary>
+    /// <param name="actual">The JSON string to check.</param>
+    /// <param name="arrayPointer">The JSON Pointer path to the array.</param>
+    /// <param name="propertyPointer">The JSON Pointer path to the string property within each array element.</param>
+    /// <param name="regex">The regular expression pattern to check against.</param>
+    /// <param name="customMessage">An optional custom message to include in the exception if the assertion fails.</param>
+    /// <exception cref="ShouldAssertException">Thrown if any element value matches the regex pattern.</exception>
+    public static void ShouldAllNotHaveJsonValueMatchingRegex(this string? actual, string arrayPointer, string propertyPointer, string regex, string? customMessage = null)
+    {
+        var errorMessage = customMessage ?? $"All elements in JSON array at pointer '{arrayPointer}' should not have value at '{propertyPointer}' matching regex pattern '{regex}'";
+
+        if (actual is null)
+        {
+            throw new ShouldAssertException(new ActualShouldlyMessage(actual, "JSON string is null").ToString());
+        }
+
+        Regex regexPattern;
+        try
+        {
+            regexPattern = new Regex(regex);
+        }
+        catch (ArgumentException ex)
+        {
+            throw new ShouldAssertException(new ActualShouldlyMessage(actual, $"{errorMessage}: Invalid regex pattern - {ex.Message}").ToString());
+        }
+
+        try
+        {
+            var jsonNode = JsonNode.Parse(actual);
+            if (jsonNode is null)
+            {
+                throw new ShouldAssertException(new ActualShouldlyMessage(actual, "JSON string parsed to null").ToString());
+            }
+
+            var (array, propPointer) = ParseArrayAndPropertyPointers(jsonNode, arrayPointer, propertyPointer, actual);
+
+            var failures = new List<string>();
+            for (var i = 0; i < array.Count; i++)
+            {
+                var element = array[i];
+                if (element is null || !propPointer.TryEvaluate(element, out var result))
+                {
+                    failures.Add($"index {i}: (missing)");
+                    continue;
+                }
+
+                string? actualValue;
+                try
+                {
+                    actualValue = result?.Deserialize<string>();
+                }
+                catch (JsonException)
+                {
+                    failures.Add($"index {i}: (not a string)");
+                    continue;
+                }
+
+                if (actualValue is null)
+                {
+                    failures.Add($"index {i}: (null)");
+                    continue;
+                }
+
+                if (regexPattern.IsMatch(actualValue))
+                {
+                    failures.Add($"index {i}: '{actualValue}'");
+                }
+            }
+
+            if (failures.Count > 0)
+            {
+                var failureDesc = string.Join(", ", failures);
+                throw new ShouldAssertException(new ExpectedActualShouldlyMessage(
+                    $"not match regex '{regex}' at all indices",
+                    $"matching values: {failureDesc}",
+                    errorMessage).ToString());
+            }
+        }
+        catch (JsonException ex)
+        {
+            throw new ShouldAssertException(new ActualShouldlyMessage(actual, $"Invalid JSON: {ex.Message}").ToString());
+        }
+        catch (PointerParseException ex)
+        {
+            throw new ShouldAssertException(new ActualShouldlyMessage(actual, $"Invalid JSON pointer: {ex.Message}").ToString());
+        }
+    }
+
+    /// <summary>
     /// Gets and validates a JSON value at the specified pointer path.
     /// </summary>
     /// <typeparam name="T">The type to deserialize the value to.</typeparam>
@@ -999,6 +1655,105 @@ public static class ShouldlyJsonExtensions
         catch (ShouldAssertException ex)
         {
             throw new ShouldAssertException(new ActualShouldlyMessage(json, customMessage ?? ex.Message).ToString());
+        }
+    }
+
+    /// <summary>
+    /// Parses and validates both the array pointer and property pointer, returning the evaluated array and the parsed property pointer.
+    /// </summary>
+    /// <param name="rootNode">The root JSON node to evaluate against.</param>
+    /// <param name="arrayPointer">The JSON Pointer path to the array.</param>
+    /// <param name="propertyPointer">The JSON Pointer path to the property within each array element.</param>
+    /// <param name="actual">The original JSON string, used for error messages.</param>
+    /// <returns>A tuple containing the JSON array and the parsed property pointer.</returns>
+    private static (JsonArray Array, JsonPointer PropertyPointer) ParseArrayAndPropertyPointers(
+        JsonNode rootNode,
+        string arrayPointer,
+        string propertyPointer,
+        string? actual)
+    {
+        var arrayPtr = JsonPointer.Parse(arrayPointer);
+
+        if (!arrayPtr.TryEvaluate(rootNode, out var arrayResult))
+        {
+            throw new ShouldAssertException(new ActualShouldlyMessage(actual,
+                $"No value found at JSON pointer '{arrayPointer}'").ToString());
+        }
+
+        if (arrayResult?.GetValueKind() != JsonValueKind.Array)
+        {
+            throw new ShouldAssertException(new ActualShouldlyMessage(actual,
+                $"Value at JSON pointer '{arrayPointer}' is not an array").ToString());
+        }
+
+        var propPointer = JsonPointer.Parse(propertyPointer);
+
+        return (arrayResult.AsArray(), propPointer);
+    }
+
+    /// <summary>
+    /// Gets all struct-typed values at the given property pointer from every element in the array at the given array pointer.
+    /// </summary>
+    /// <typeparam name="T">The struct type to deserialize each value to.</typeparam>
+    /// <param name="actual">The JSON string to search.</param>
+    /// <param name="arrayPointer">The JSON Pointer path to the array.</param>
+    /// <param name="propertyPointer">The JSON Pointer path to the property within each array element.</param>
+    /// <param name="customMessage">An optional custom message to include in any thrown exception.</param>
+    /// <returns>A list of (index, value) pairs for each element in the array.</returns>
+    private static List<(int Index, T Value)> GetAllStructValuesFromArrayElements<T>(
+        string? actual,
+        string arrayPointer,
+        string propertyPointer,
+        string? customMessage) where T : struct
+    {
+        if (actual is null)
+        {
+            throw new ShouldAssertException(new ActualShouldlyMessage(actual, "JSON string is null").ToString());
+        }
+
+        try
+        {
+            var jsonNode = JsonNode.Parse(actual);
+            if (jsonNode is null)
+            {
+                throw new ShouldAssertException(new ActualShouldlyMessage(actual, "JSON string parsed to null").ToString());
+            }
+
+            var (array, propPointer) = ParseArrayAndPropertyPointers(jsonNode, arrayPointer, propertyPointer, actual);
+
+            var results = new List<(int Index, T Value)>();
+            for (var i = 0; i < array.Count; i++)
+            {
+                var element = array[i];
+                if (element is null || !propPointer.TryEvaluate(element, out var result))
+                {
+                    throw new ShouldAssertException(new ActualShouldlyMessage(actual,
+                        customMessage ?? $"Element at index {i} in array '{arrayPointer}' does not have property '{propertyPointer}'").ToString());
+                }
+
+                T value;
+                try
+                {
+                    value = result!.Deserialize<T>();
+                }
+                catch (JsonException ex)
+                {
+                    throw new ShouldAssertException(new ActualShouldlyMessage(actual,
+                        customMessage ?? $"Element at index {i}: value at '{propertyPointer}' is not a valid {typeof(T).Name}: {ex.Message}").ToString());
+                }
+
+                results.Add((i, value));
+            }
+
+            return results;
+        }
+        catch (JsonException ex)
+        {
+            throw new ShouldAssertException(new ActualShouldlyMessage(actual, $"Invalid JSON: {ex.Message}").ToString());
+        }
+        catch (PointerParseException ex)
+        {
+            throw new ShouldAssertException(new ActualShouldlyMessage(actual, $"Invalid JSON pointer: {ex.Message}").ToString());
         }
     }
 }
