@@ -207,16 +207,12 @@ public static partial class ShouldlyJsonExtensions
     {
         var result = JsonHelper.TryGetNodeAtPointer(actual, jsonPointer);
 
-        // A JSON document whose root is literally `null` parses to no node. At the root pointer
-        // that parsed null *is* the JSON null value, so it must be treated as kind Null.
-        var isRootNull = result.Failure == JsonPointerFailure.ParsedToNull && (jsonPointer.Length == 0 || jsonPointer == "#");
-
-        if (!result.Success && !isRootNull)
+        if (!result.Success)
         {
             throw new ShouldAssertException(new ActualShouldlyMessage(actual, customMessage ?? result.Message, shouldlyMethod).ToString());
         }
 
-        var actualKind = isRootNull ? JsonValueKind.Null : result.Value?.GetValueKind() ?? JsonValueKind.Null;
+        var actualKind = result.Value?.GetValueKind() ?? JsonValueKind.Null;
         var matches = KindMatches(actualKind, kind);
 
         if (matches != negated)

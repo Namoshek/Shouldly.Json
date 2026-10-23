@@ -27,7 +27,7 @@ public static partial class ShouldlyJsonExtensions
 
         try
         {
-            _ = JsonDocument.Parse(actual);
+            using var document = JsonDocument.Parse(actual);
         }
         catch (JsonException ex)
         {
@@ -56,7 +56,7 @@ public static partial class ShouldlyJsonExtensions
 
         try
         {
-            _ = JsonDocument.Parse(actual);
+            using var document = JsonDocument.Parse(actual);
         }
         catch (JsonException)
         {

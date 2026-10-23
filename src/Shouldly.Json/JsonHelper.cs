@@ -1,5 +1,6 @@
 namespace Shouldly;
 
+using System;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Json.Pointer;
@@ -14,9 +15,6 @@ internal enum JsonPointerFailure
 
     /// <summary>The JSON string was null or empty.</summary>
     EmptyJson,
-
-    /// <summary>The JSON string parsed to null.</summary>
-    ParsedToNull,
 
     /// <summary>The JSON string is not valid JSON.</summary>
     InvalidJson,
@@ -68,9 +66,23 @@ internal static class JsonHelper
 
         if (result is null)
         {
-            return allowNull
-                ? new JsonPointerResult<T>(default, JsonPointerFailure.None, null)
-                : new JsonPointerResult<T>(default, JsonPointerFailure.NotFound, $"No value found at JSON pointer '{pointer}'");
+            // A JSON null only equals default(T) when T itself can represent null.
+            // For non-nullable value types, null must never be reported as a successful default
+            // (otherwise ShouldHaveJsonValue<int>("/value", 0) would pass on a JSON null).
+            var typeAllowsNull = !typeof(T).IsValueType || Nullable.GetUnderlyingType(typeof(T)) is not null;
+
+            if (allowNull && typeAllowsNull)
+            {
+                return new JsonPointerResult<T>(default, JsonPointerFailure.None, null);
+            }
+
+            if (allowNull)
+            {
+                return new JsonPointerResult<T>(default, JsonPointerFailure.TypeConversion,
+                    $"Value at JSON pointer '{pointer}' is null, not a valid {typeof(T).Name}");
+            }
+
+            return new JsonPointerResult<T>(default, JsonPointerFailure.NotFound, $"No value found at JSON pointer '{pointer}'");
         }
 
         try
@@ -115,11 +127,9 @@ internal static class JsonHelper
             return new JsonPointerResult<JsonNode?>(default, JsonPointerFailure.InvalidJson, $"Invalid JSON: {ex.Message}");
         }
 
-        if (jsonNode == null)
-        {
-            return new JsonPointerResult<JsonNode?>(default, JsonPointerFailure.ParsedToNull, "JSON string parsed to null");
-        }
-
+        // Validate the pointer before treating a parsed-null document as a failure: a document
+        // whose root is literally `null` parses to no node, and at the root pointer that parsed
+        // null *is* the JSON null value.
         JsonPointer jsonPointer;
         try
         {
@@ -128,6 +138,15 @@ internal static class JsonHelper
         catch (PointerParseException ex)
         {
             return new JsonPointerResult<JsonNode?>(default, JsonPointerFailure.InvalidPointer, $"Invalid JSON pointer '{pointer}': {ex.Message}");
+        }
+
+        if (jsonNode == null)
+        {
+            var isRootPointer = pointer.Length == 0 || pointer == "#";
+
+            return isRootPointer
+                ? new JsonPointerResult<JsonNode?>(default, JsonPointerFailure.None, null)
+                : new JsonPointerResult<JsonNode?>(default, JsonPointerFailure.NotFound, $"No value found at JSON pointer '{pointer}'");
         }
 
         if (!jsonPointer.TryEvaluate(jsonNode, out var result))
